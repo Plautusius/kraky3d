@@ -182,7 +182,8 @@ async function loadProjectsFromGitHub() {
 
         if (response.ok) {
             const data = await response.json();
-            const content = atob(data.content);
+            // Properly decode UTF-8 from base64
+            const content = decodeURIComponent(escape(atob(data.content)));
             return { projects: JSON.parse(content), sha: data.sha };
         }
     } catch (error) {

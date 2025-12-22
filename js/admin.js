@@ -383,7 +383,9 @@ function openAddModal() {
     document.getElementById('project-form').reset();
     document.getElementById('tags-container').innerHTML = '';
     resetDropzones();
+    resetModelDropzone();
     document.getElementById('project-thumbnail').value = '';
+    document.getElementById('project-model-url').value = '';
     document.getElementById('project-modal').classList.add('active');
 }
 
@@ -399,11 +401,16 @@ function openEditModal(id) {
     document.getElementById('project-software').value = project.software || '';
     document.getElementById('project-description').value = project.description || '';
     document.getElementById('project-has3d').checked = project.has3D || false;
-    document.getElementById('project-model-url').value = project.modelUrl || '';
 
     // Load dropzones with existing data
     resetDropzones();
     loadDropzonesForEdit(project);
+
+    // Load model if exists
+    resetModelDropzone();
+    if (project.modelUrl) {
+        loadModelForEdit(project.modelUrl);
+    }
 
     const tagsContainer = document.getElementById('tags-container');
     tagsContainer.innerHTML = '';
@@ -886,9 +893,250 @@ function loadDropzonesForEdit(project) {
     });
 }
 
+// ============================================
+// 3D MODEL UPLOAD
+// ============================================
+let currentModelUrl = '';
+
+function initModelDropzone() {
+    const modelDropzone = document.getElementById('model-dropzone');
+    if (!modelDropzone) return;
+
+    const fileInput = modelDropzone.querySelector('input[type="file"]');
+
+    // Click to select file
+    modelDropzone.addEventListener('click', (e) => {
+        if (e.target.closest('.remove-preview')) return;
+        fileInput?.click();
+    });
+
+    // File input change
+    fileInput?.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            uploadModel(file, modelDropzone);
+        }
+        e.target.value = '';
+    });
+
+    // Drag events
+    ['dragenter', 'dragover'].forEach(event => {
+        modelDropzone.addEventListener(event, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            modelDropzone.classList.add('dragover');
+        });
+    });
+
+    ['dragleave', 'drop'].forEach(event => {
+        modelDropzone.addEventListener(event, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            modelDropzone.classList.remove('dragover');
+        });
+    });
+
+    // Handle drop
+    modelDropzone.addEventListener('drop', (e) => {
+        const files = Array.from(e.dataTransfer.files);
+        const modelFile = files.find(f => /\.(glb|gltf)$/i.test(f.name));
+
+        if (modelFile) {
+            uploadModel(modelFile, modelDropzone);
+        } else {
+            showToast('Vyberte .glb nebo .gltf soubor', 'error');
+        }
+    });
+}
+
+async function uploadModel(file, dropzone) {
+    if (!githubToken) {
+        showToast('Připojte GitHub pro nahrání modelu', 'error');
+        return;
+    }
+
+    const content = dropzone.querySelector('.dropzone-content');
+    const preview = dropzone.querySelector('.dropzone-preview');
+    const loading = dropzone.querySelector('.dropzone-loading');
+
+    // Show loading
+    content.style.display = 'none';
+    preview.style.display = 'none';
+    loading.style.display = 'flex';
+    dropzone.classList.add('uploading');
+
+    try {
+        // Read file as base64
+        const base64Content = await fileToBase64(file);
+
+        // Generate unique filename
+        const timestamp = Date.now();
+        const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+        const fileName = `${timestamp}_${safeName}`;
+        const filePath = `assets/models/${fileName}`;
+
+        // Check if assets/models folder exists, if not create it
+        const url = await uploadFileToGitHub(filePath, base64Content, `Add 3D model: ${file.name}`);
+
+        loading.style.display = 'none';
+        dropzone.classList.remove('uploading');
+
+        if (url) {
+            currentModelUrl = url;
+            document.getElementById('project-model-url').value = url;
+            showModelPreview(file.name, file.size, dropzone);
+            showToast('3D model nahrán!', 'success');
+        } else {
+            content.style.display = 'flex';
+            showToast('Nepodařilo se nahrát model', 'error');
+        }
+    } catch (error) {
+        console.error('Model upload error:', error);
+        loading.style.display = 'none';
+        content.style.display = 'flex';
+        dropzone.classList.remove('uploading');
+        showToast('Chyba při nahrávání: ' + error.message, 'error');
+    }
+}
+
+function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            // Remove data URL prefix to get pure base64
+            const base64 = reader.result.split(',')[1];
+            resolve(base64);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
+async function uploadFileToGitHub(path, base64Content, message) {
+    try {
+        // Check if file exists (to get SHA for update)
+        let sha = null;
+        try {
+            const checkResponse = await fetch(
+                `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${path}`,
+                {
+                    headers: {
+                        'Authorization': `token ${githubToken}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                }
+            );
+            if (checkResponse.ok) {
+                const data = await checkResponse.json();
+                sha = data.sha;
+            }
+        } catch (e) {
+            // File doesn't exist, that's fine
+        }
+
+        // Upload file
+        const body = {
+            message: message,
+            content: base64Content,
+            branch: CONFIG.branch
+        };
+        if (sha) body.sha = sha;
+
+        const response = await fetch(
+            `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${path}`,
+            {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${githubToken}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(body)
+            }
+        );
+
+        if (response.ok) {
+            // Return the raw GitHub URL for the file
+            return `https://raw.githubusercontent.com/${CONFIG.owner}/${CONFIG.repo}/${CONFIG.branch}/${path}`;
+        } else {
+            const error = await response.json();
+            console.error('GitHub upload error:', error);
+            return null;
+        }
+    } catch (error) {
+        console.error('GitHub upload error:', error);
+        return null;
+    }
+}
+
+function showModelPreview(filename, size, dropzone) {
+    const content = dropzone.querySelector('.dropzone-content');
+    const preview = dropzone.querySelector('.dropzone-preview');
+
+    content.style.display = 'none';
+    preview.style.display = 'flex';
+
+    document.getElementById('model-filename').textContent = filename;
+    document.getElementById('model-filesize').textContent = formatFileSize(size);
+}
+
+function formatFileSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+function removeModel() {
+    const dropzone = document.getElementById('model-dropzone');
+    const content = dropzone.querySelector('.dropzone-content');
+    const preview = dropzone.querySelector('.dropzone-preview');
+
+    content.style.display = 'flex';
+    preview.style.display = 'none';
+
+    currentModelUrl = '';
+    document.getElementById('project-model-url').value = '';
+}
+
+function resetModelDropzone() {
+    const dropzone = document.getElementById('model-dropzone');
+    if (!dropzone) return;
+
+    const content = dropzone.querySelector('.dropzone-content');
+    const preview = dropzone.querySelector('.dropzone-preview');
+
+    if (content) content.style.display = 'flex';
+    if (preview) preview.style.display = 'none';
+
+    currentModelUrl = '';
+}
+
+function loadModelForEdit(modelUrl) {
+    if (!modelUrl) return;
+
+    const dropzone = document.getElementById('model-dropzone');
+    if (!dropzone) return;
+
+    currentModelUrl = modelUrl;
+    document.getElementById('project-model-url').value = modelUrl;
+
+    // Extract filename from URL
+    const filename = modelUrl.split('/').pop() || 'model.glb';
+
+    const content = dropzone.querySelector('.dropzone-content');
+    const preview = dropzone.querySelector('.dropzone-preview');
+
+    content.style.display = 'none';
+    preview.style.display = 'flex';
+
+    document.getElementById('model-filename').textContent = filename;
+    document.getElementById('model-filesize').textContent = 'Nahráno';
+}
+
 // Make functions global
 window.removeThumbnail = removeThumbnail;
 window.removeGalleryImage = removeGalleryImage;
+window.removeModel = removeModel;
 
 // ============================================
 // INITIALIZATION
@@ -926,6 +1174,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize dropzones
     initDropzones();
+    initModelDropzone();
 
     // Check session
     if (isLoggedIn()) {

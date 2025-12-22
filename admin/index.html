@@ -387,10 +387,38 @@
                         <div id="images-list" class="images-list" style="display:none"></div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="project-model-url">URL 3D modelu (.glb)</label>
-                        <input type="text" id="project-model-url" placeholder="assets/models/model.glb">
-                        <p class="form-hint">Cesta k GLB souboru pro 3D viewer</p>
+                    <div class="form-group" id="model-upload-group">
+                        <label>3D Model (.glb, .gltf)</label>
+                        <div id="model-dropzone" class="dropzone">
+                            <input type="file" id="model-file" accept=".glb,.gltf" style="display:none">
+                            <div class="dropzone-content">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
+                                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                                    <line x1="12" y1="22.08" x2="12" y2="12"/>
+                                </svg>
+                                <p>Přetáhněte 3D model sem</p>
+                                <span>nebo klikněte pro výběr (.glb, .gltf)</span>
+                            </div>
+                            <div class="dropzone-preview dropzone-model-preview" style="display:none">
+                                <div class="model-file-info">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
+                                    </svg>
+                                    <div>
+                                        <strong id="model-filename">model.glb</strong>
+                                        <span id="model-filesize">0 KB</span>
+                                    </div>
+                                </div>
+                                <button type="button" class="remove-preview" onclick="removeModel()">&times;</button>
+                            </div>
+                            <div class="dropzone-loading" style="display:none">
+                                <div class="spinner"></div>
+                                <span>Nahrávám na GitHub...</span>
+                            </div>
+                        </div>
+                        <input type="hidden" id="project-model-url">
+                        <p class="form-hint">Model se nahraje do assets/models/ na GitHubu</p>
                     </div>
 
                     <div class="form-group">

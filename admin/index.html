@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel | kraky3D</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="login-screen" class="login-screen">
+        <div class="login-box">
+            <h1 class="login-logo">kraky<span class="accent">3D</span></h1>
+            <p class="login-subtitle">Admin Panel</p>
+
+            <div id="login-error" class="login-error">
+                Nesprávné heslo. Zkuste to znovu.
+            </div>
+
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="login-password">Heslo</label>
+                    <input type="password" id="login-password" required placeholder="Zadejte heslo">
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">
+                    <span>Přihlásit se</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/>
+                        <polyline points="10 17 15 12 10 7"/>
+                        <line x1="15" y1="12" x2="3" y2="12"/>
+                    </svg>
+                </button>
+            </form>
+
+            <p style="margin-top: 30px; font-size: 0.85rem; color: var(--text-muted);">
+                Výchozí heslo: <code>admin</code>
+            </p>
+        </div>
+    </div>
+
+    <!-- Admin Panel -->
+    <div id="admin-panel" class="admin-wrapper" style="display: none;">
+        <!-- Header -->
+        <header class="admin-header">
+            <a href="../index.html" class="admin-logo">
+                kraky<span class="accent">3D</span>
+                <span class="admin-badge">Admin</span>
+            </a>
+            <div class="admin-user">
+                <span>Přihlášen jako Admin</span>
+                <button class="btn btn-secondary btn-sm" onclick="logout()">Odhlásit</button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="admin-main">
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
+                        </svg>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="stat-total">0</h3>
+                        <p>Celkem projektů</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 6v6l4 2"/>
+                        </svg>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="stat-blender">0</h3>
+                        <p>Blender</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                            <polyline points="2 17 12 22 22 17"/>
+                            <polyline points="2 12 12 17 22 12"/>
+                        </svg>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="stat-3dsmax">0</h3>
+                        <p>3DS Max</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                        </svg>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="stat-3d">0</h3>
+                        <p>S 3D viewerem</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Projects Table -->
+            <div class="projects-section">
+                <div class="projects-header">
+                    <h2>Projekty</h2>
+                    <div class="projects-actions">
+                        <button class="btn btn-primary" onclick="openAddModal()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"/>
+                                <line x1="5" y1="12" x2="19" y2="12"/>
+                            </svg>
+                            Přidat projekt
+                        </button>
+                    </div>
+                </div>
+                <table class="projects-table">
+                    <thead>
+                        <tr>
+                            <th>Projekt</th>
+                            <th>Kategorie</th>
+                            <th>Software</th>
+                            <th>3D</th>
+                            <th>Tagy</th>
+                            <th>Akce</th>
+                        </tr>
+                    </thead>
+                    <tbody id="projects-tbody">
+                        <!-- Filled by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Export/Import -->
+            <div class="export-section">
+                <h3>Export & Import</h3>
+                <p>
+                    Exportujte projekty jako JSON soubor pro zálohování nebo nahrajte na GitHub.
+                    Importujte existující soubor pro obnovení dat.
+                </p>
+                <div class="export-actions">
+                    <button class="btn btn-primary" onclick="exportProjects()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                        Exportovat JSON
+                    </button>
+                    <div class="file-input-wrapper">
+                        <button class="btn btn-secondary">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                                <polyline points="17 8 12 3 7 8"/>
+                                <line x1="12" y1="3" x2="12" y2="15"/>
+                            </svg>
+                            Importovat JSON
+                        </button>
+                        <input type="file" id="import-file" accept=".json">
+                    </div>
+                    <button class="btn btn-secondary" onclick="resetToDefault()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M23 4v6h-6"/>
+                            <path d="M1 20v-6h6"/>
+                            <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+                        </svg>
+                        Reset na výchozí
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add/Edit Project Modal -->
+    <div id="project-modal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3 id="modal-title-text">Přidat projekt</h3>
+                <button class="modal-close" onclick="closeModal('project-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="project-form" class="project-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="project-title">Název projektu *</label>
+                            <input type="text" id="project-title" required placeholder="Např. Fantasy Dragon">
+                        </div>
+                        <div class="form-group">
+                            <label for="project-category">Kategorie *</label>
+                            <select id="project-category" required>
+                                <option value="">Vyberte kategorii</option>
+                                <option value="character">Postava</option>
+                                <option value="environment">Prostředí</option>
+                                <option value="product">Produkt</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="project-software">Software *</label>
+                            <select id="project-software" required>
+                                <option value="">Vyberte software</option>
+                                <option value="blender">Blender</option>
+                                <option value="3dsmax">3DS Max</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-group">
+                                <input type="checkbox" id="project-has3d">
+                                <span>Má 3D viewer</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="project-description">Popis</label>
+                        <textarea id="project-description" rows="3" placeholder="Krátký popis projektu..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="project-thumbnail">Náhledový obrázek (URL) *</label>
+                        <input type="url" id="project-thumbnail" required placeholder="https://...">
+                        <div id="thumbnail-preview" class="image-preview">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                <circle cx="8.5" cy="8.5" r="1.5"/>
+                                <polyline points="21 15 16 10 5 21"/>
+                            </svg>
+                            <span>Náhled obrázku</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Obrázky galerie</label>
+                        <div id="images-list" class="images-list"></div>
+                        <button type="button" class="add-image-btn" onclick="addImageInput()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"/>
+                                <line x1="5" y1="12" x2="19" y2="12"/>
+                            </svg>
+                            Přidat obrázek
+                        </button>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="project-model-url">URL 3D modelu (.glb)</label>
+                        <input type="text" id="project-model-url" placeholder="assets/models/model.glb">
+                        <p class="form-hint">Cesta k GLB souboru pro 3D viewer</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tagy</label>
+                        <div class="tags-input">
+                            <div id="tags-container"></div>
+                            <input type="text" id="tags-input" placeholder="Přidejte tag a stiskněte Enter">
+                        </div>
+                        <p class="form-hint">Např: Blender, Character, PBR, Sci-fi</p>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('project-modal')">Zrušit</button>
+                <button class="btn btn-primary" onclick="saveProject()">Uložit projekt</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Delete Modal -->
+    <div id="confirm-modal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3>Smazat projekt</h3>
+                <button class="modal-close" onclick="closeModal('confirm-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="confirm-content">
+                    <div class="confirm-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"/>
+                            <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                        </svg>
+                    </div>
+                    <h4>Opravdu smazat?</h4>
+                    <p>Projekt "<span id="delete-project-name"></span>" bude trvale smazán.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('confirm-modal')">Zrušit</button>
+                <button class="btn btn-danger" id="confirm-delete-btn">Smazat</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="../js/admin.js"></script>
+</body>
+</html>

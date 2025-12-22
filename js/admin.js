@@ -19,11 +19,7 @@ const CONFIG = {
     // Storage keys
     sessionKey: 'kraky3d_session',
     tokenKey: 'kraky3d_github_token',
-    projectsKey: 'kraky3d_projects',
-
-    // Auto-connect token (for seamless experience)
-    // Note: This token has repo access for this specific repository
-    autoToken: 'Z2hwX09SQ3hqazNaWDFMYTJjMlZaNng3VHNsNDluM1EyNzBmM3U2RA=='
+    projectsKey: 'kraky3d_projects'
 };
 
 // ============================================
@@ -71,44 +67,35 @@ function showAdminPanel() {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('admin-panel').style.display = 'block';
 
-    // Always try auto-connect first if autoToken exists
-    if (CONFIG.autoToken) {
-        autoConnectGitHub();
+    // Load GitHub token from localStorage
+    githubToken = localStorage.getItem(CONFIG.tokenKey);
+
+    // If no token, show setup prompt
+    if (!githubToken) {
+        setTimeout(() => {
+            showFirstTimeSetup();
+        }, 500);
     } else {
-        githubToken = localStorage.getItem(CONFIG.tokenKey);
-        updateGitHubStatus();
-        loadProjects();
-    }
-}
-
-async function autoConnectGitHub() {
-    try {
-        // Decode the token
-        const token = atob(CONFIG.autoToken);
-        console.log('Auto-connecting to GitHub...');
-
-        // Set token directly
-        githubToken = token;
-        localStorage.setItem(CONFIG.tokenKey, token);
-
-        // Test if token is valid
-        const valid = await testGitHubToken(token);
-        console.log('Token valid:', valid);
-
-        if (valid) {
+        // Verify token is still valid
+        testGitHubToken(githubToken).then(valid => {
+            if (!valid) {
+                githubToken = null;
+                localStorage.removeItem(CONFIG.tokenKey);
+                showToast('GitHub token vypršel, zadejte nový', 'error');
+                showFirstTimeSetup();
+            }
             updateGitHubStatus();
-            showToast('Automaticky připojeno ke GitHubu!', 'success');
-        } else {
-            console.error('Token test failed');
-            githubToken = null;
-            localStorage.removeItem(CONFIG.tokenKey);
-        }
-    } catch (error) {
-        console.error('Auto-connect failed:', error);
+        });
     }
 
     updateGitHubStatus();
     loadProjects();
+}
+
+function showFirstTimeSetup() {
+    // Auto-open GitHub connection modal for first-time setup
+    document.getElementById('github-modal').classList.add('active');
+    showToast('Pro plnou funkčnost připojte GitHub', 'success');
 }
 
 // ============================================

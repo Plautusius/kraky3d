@@ -641,7 +641,6 @@ function showToast(message, type = 'success') {
 // ============================================
 // DROPZONE & IMAGE UPLOAD
 // ============================================
-const IMGBB_API_KEY = 'c2dd38a9a28fae3990bc9b3e4ec26eb3'; // Free API key
 let galleryImages = [];
 
 function initDropzones() {
@@ -752,24 +751,30 @@ function isValidImageUrl(url) {
     }
 }
 
-async function uploadToImgBB(file) {
-    const formData = new FormData();
-    formData.append('image', file);
+async function uploadImageToGitHub(file) {
+    if (!githubToken) {
+        showToast('Připojte GitHub pro nahrávání obrázků', 'error');
+        return null;
+    }
 
     try {
-        const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
-            method: 'POST',
-            body: formData
-        });
+        // Read file as base64
+        const base64Content = await fileToBase64(file);
 
-        if (response.ok) {
-            const data = await response.json();
-            return data.data.url;
-        }
+        // Generate unique filename
+        const timestamp = Date.now();
+        const ext = file.name.split('.').pop().toLowerCase();
+        const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+        const fileName = `${timestamp}_${safeName}`;
+        const filePath = `assets/images/${fileName}`;
+
+        // Upload to GitHub
+        const url = await uploadFileToGitHub(filePath, base64Content, `Add image: ${file.name}`);
+        return url;
     } catch (error) {
-        console.error('ImgBB upload error:', error);
+        console.error('GitHub image upload error:', error);
+        return null;
     }
-    return null;
 }
 
 async function uploadThumbnail(file, dropzone) {
@@ -784,7 +789,7 @@ async function uploadThumbnail(file, dropzone) {
     loading.style.display = 'flex';
     dropzone.classList.add('uploading');
 
-    const url = await uploadToImgBB(file);
+    const url = await uploadImageToGitHub(file);
 
     loading.style.display = 'none';
     dropzone.classList.remove('uploading');
@@ -792,7 +797,7 @@ async function uploadThumbnail(file, dropzone) {
     if (url) {
         showThumbnailPreview(url, dropzone);
         hiddenInput.value = url;
-        showToast('Obrázek nahrán!', 'success');
+        showToast('Obrázek nahrán na GitHub!', 'success');
     } else {
         content.style.display = 'flex';
         showToast('Nepodařilo se nahrát obrázek', 'error');
@@ -839,7 +844,7 @@ async function uploadGalleryImage(file) {
     `;
     container.appendChild(item);
 
-    const url = await uploadToImgBB(file);
+    const url = await uploadImageToGitHub(file);
 
     if (url) {
         galleryImages.push(url);
@@ -848,7 +853,7 @@ async function uploadGalleryImage(file) {
             <img src="${url}" alt="Gallery image">
             <button type="button" class="remove-preview" onclick="removeGalleryImage(this, '${url}')">&times;</button>
         `;
-        showToast('Obrázek nahrán!', 'success');
+        showToast('Obrázek nahrán na GitHub!', 'success');
     } else {
         item.remove();
         showToast('Nepodařilo se nahrát obrázek', 'error');

@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>kraky3D | 3D Artist & Designer</title>
+    <meta name="description" content="Portfolio 3D umělce - Blender, 3DS Max, vizualizace, modelování">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+    <!-- Preloader -->
+    <div id="preloader">
+        <div class="loader-content">
+            <div class="loader-cube">
+                <div class="cube-face front"></div>
+                <div class="cube-face back"></div>
+                <div class="cube-face right"></div>
+                <div class="cube-face left"></div>
+                <div class="cube-face top"></div>
+                <div class="cube-face bottom"></div>
+            </div>
+            <div class="loader-text">
+                <span class="logo-text">kraky<span class="accent">3D</span></span>
+                <div class="loading-bar">
+                    <div class="loading-progress"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cursor Effect -->
+    <div class="cursor-glow"></div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="#" class="nav-logo">
+                kraky<span class="accent">3D</span>
+            </a>
+            <ul class="nav-menu">
+                <li><a href="#home" class="nav-link active">Home</a></li>
+                <li><a href="#portfolio" class="nav-link">Portfolio</a></li>
+                <li><a href="#about" class="nav-link">About</a></li>
+                <li><a href="#process" class="nav-link">Process</a></li>
+                <li><a href="#services" class="nav-link">Services</a></li>
+                <li><a href="#contact" class="nav-link">Contact</a></li>
+            </ul>
+            <button class="nav-toggle" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="hero-bg">
+            <div class="grid-overlay"></div>
+            <div class="particles" id="particles"></div>
+        </div>
+        <div class="hero-content">
+            <div class="hero-text">
+                <p class="hero-subtitle">3D Artist & Designer</p>
+                <h1 class="hero-title">
+                    <span class="line">Vytvářím</span>
+                    <span class="line gradient-text">digitální světy</span>
+                    <span class="line">z představ</span>
+                </h1>
+                <p class="hero-description">
+                    Specializuji se na 3D modelování, vizualizace a animace
+                    v Blenderu a 3DS Max. Každý projekt je unikátní příběh.
+                </p>
+                <div class="hero-buttons">
+                    <a href="#portfolio" class="btn btn-primary">
+                        <span>Prohlédnout Portfolio</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                        </svg>
+                    </a>
+                    <a href="#contact" class="btn btn-secondary">Spolupráce</a>
+                </div>
+            </div>
+            <div class="hero-3d">
+                <div id="hero-canvas-container">
+                    <canvas id="hero-canvas"></canvas>
+                </div>
+                <div class="hero-3d-info">
+                    <span class="drag-hint">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2v20M2 12h20"/>
+                        </svg>
+                        Táhni pro rotaci
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="scroll-indicator">
+            <span>Scroll</span>
+            <div class="scroll-line"></div>
+        </div>
+    </section>
+
+    <!-- Portfolio Section -->
+    <section id="portfolio" class="portfolio">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">Portfolio</span>
+                <h2 class="section-title">Moje <span class="gradient-text">práce</span></h2>
+                <p class="section-subtitle">Výběr z mých nejlepších 3D projektů</p>
+            </div>
+
+            <!-- Filters -->
+            <div class="portfolio-filters">
+                <button class="filter-btn active" data-filter="all">Vše</button>
+                <button class="filter-btn" data-filter="blender">Blender</button>
+                <button class="filter-btn" data-filter="3dsmax">3DS Max</button>
+                <button class="filter-btn" data-filter="character">Postavy</button>
+                <button class="filter-btn" data-filter="environment">Prostředí</button>
+                <button class="filter-btn" data-filter="product">Produkty</button>
+            </div>
+
+            <!-- Portfolio Grid -->
+            <div class="portfolio-grid" id="portfolio-grid">
+                <!-- Projects loaded from JSON -->
+            </div>
+
+            <div class="portfolio-loading">
+                <div class="spinner"></div>
+                <span>Načítám projekty...</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="about">
+        <div class="container">
+            <div class="about-grid">
+                <div class="about-image">
+                    <div class="image-frame">
+                        <img src="https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=600&h=600&fit=crop" alt="kraky3D workspace">
+                        <div class="frame-accent"></div>
+                    </div>
+                    <div class="floating-badge">
+                        <span class="years">5+</span>
+                        <span class="text">Let zkušeností</span>
+                    </div>
+                </div>
+                <div class="about-content">
+                    <span class="section-tag">O mně</span>
+                    <h2 class="section-title">Kdo je <span class="gradient-text">kraky3D</span>?</h2>
+                    <p class="about-text">
+                        Jsem 3D umělec s vášní pro vytváření vizuálně ohromujících digitálních
+                        světů. Moje cesta začala před lety, když jsem poprvé otevřel Blender
+                        a zjistil, že mohu přeměnit své představy ve skutečnost.
+                    </p>
+                    <p class="about-text">
+                        Dnes pracuji s klienty po celém světě na projektech od produktových
+                        vizualizací přes architektonické rendery až po herní assety a animace.
+                    </p>
+
+                    <div class="skills-grid">
+                        <div class="skill-item">
+                            <div class="skill-icon">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/0/0c/Blender_logo_no_text.svg" alt="Blender">
+                            </div>
+                            <span>Blender</span>
+                        </div>
+                        <div class="skill-item">
+                            <div class="skill-icon">
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                                </svg>
+                            </div>
+                            <span>3DS Max</span>
+                        </div>
+                        <div class="skill-item">
+                            <div class="skill-icon">
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                                </svg>
+                            </div>
+                            <span>Substance</span>
+                        </div>
+                        <div class="skill-item">
+                            <div class="skill-icon">
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2a10 10 0 1010 10A10 10 0 0012 2zm0 18a8 8 0 118-8 8 8 0 01-8 8z"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                </svg>
+                            </div>
+                            <span>ZBrush</span>
+                        </div>
+                    </div>
+
+                    <div class="about-stats">
+                        <div class="stat">
+                            <span class="stat-number" data-target="150">0</span>
+                            <span class="stat-label">Dokončených projektů</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-number" data-target="50">0</span>
+                            <span class="stat-label">Spokojených klientů</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-number" data-target="10">0</span>
+                            <span class="stat-label">Ocenění</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Process Section -->
+    <section id="process" class="process">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">Proces</span>
+                <h2 class="section-title">Jak <span class="gradient-text">pracuji</span></h2>
+                <p class="section-subtitle">Od nápadu k finálnímu renderů</p>
+            </div>
+
+            <div class="process-timeline">
+                <div class="process-step" data-step="01">
+                    <div class="step-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+                        </svg>
+                    </div>
+                    <div class="step-content">
+                        <h3>Konzultace</h3>
+                        <p>Probereme vaši vizi, požadavky a cíle projektu. Definujeme styl a technické specifikace.</p>
+                    </div>
+                </div>
+
+                <div class="process-step" data-step="02">
+                    <div class="step-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 19l7-7 3 3-7 7-3-3z"/>
+                            <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/>
+                            <path d="M2 2l7.586 7.586"/>
+                        </svg>
+                    </div>
+                    <div class="step-content">
+                        <h3>Koncept</h3>
+                        <p>Vytvořím prvotní návrhy a skicy. Společně vybereme směr, kterým se projekt vydá.</p>
+                    </div>
+                </div>
+
+                <div class="process-step" data-step="03">
+                    <div class="step-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
+                            <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                            <line x1="12" y1="22.08" x2="12" y2="12"/>
+                        </svg>
+                    </div>
+                    <div class="step-content">
+                        <h3>Modelování</h3>
+                        <p>High-poly i low-poly modely, retopologie, UV mapping. Precizní práce s geometrií.</p>
+                    </div>
+                </div>
+
+                <div class="process-step" data-step="04">
+                    <div class="step-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="13.5" cy="6.5" r="0.5"/>
+                            <circle cx="17.5" cy="10.5" r="0.5"/>
+                            <circle cx="8.5" cy="7.5" r="0.5"/>
+                            <circle cx="6.5" cy="12.5" r="0.5"/>
+                            <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 011.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.555C21.965 6.012 17.461 2 12 2z"/>
+                        </svg>
+                    </div>
+                    <div class="step-content">
+                        <h3>Texturování</h3>
+                        <p>PBR materiály, procedurální textury, hand-painted detaily. Oživuji modely barvami.</p>
+                    </div>
+                </div>
+
+                <div class="process-step" data-step="05">
+                    <div class="step-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="5"/>
+                            <line x1="12" y1="1" x2="12" y2="3"/>
+                            <line x1="12" y1="21" x2="12" y2="23"/>
+                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                            <line x1="1" y1="12" x2="3" y2="12"/>
+                            <line x1="21" y1="12" x2="23" y2="12"/>
+                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                        </svg>
+                    </div>
+                    <div class="step-content">
+                        <h3>Osvětlení & Render</h3>
+                        <p>Studiové i HDRI osvětlení, Cycles/V-Ray render, post-processing v compositing.</p>
+                    </div>
+                </div>
+
+                <div class="process-step" data-step="06">
+                    <div class="step-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+                            <polyline points="22 4 12 14.01 9 11.01"/>
+                        </svg>
+                    </div>
+                    <div class="step-content">
+                        <h3>Finalizace</h3>
+                        <p>Revize, úpravy dle zpětné vazby, export v požadovaných formátech. Předání hotového díla.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="services" class="services">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">Služby</span>
+                <h2 class="section-title">Co <span class="gradient-text">nabízím</span></h2>
+                <p class="section-subtitle">Profesionální 3D služby na míru</p>
+            </div>
+
+            <div class="services-grid">
+                <div class="service-card">
+                    <div class="service-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
+                        </svg>
+                    </div>
+                    <h3>3D Modelování</h3>
+                    <p>Tvorba detailních 3D modelů pro hry, film, produktové vizualizace nebo 3D tisk.</p>
+                    <ul class="service-features">
+                        <li>Hard-surface modeling</li>
+                        <li>Organic modeling</li>
+                        <li>Retopologie</li>
+                        <li>UV unwrapping</li>
+                    </ul>
+                    <div class="service-price">
+                        <span class="from">od</span>
+                        <span class="price">2 000 Kč</span>
+                    </div>
+                </div>
+
+                <div class="service-card featured">
+                    <div class="featured-badge">Nejpopulárnější</div>
+                    <div class="service-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                            <circle cx="8.5" cy="8.5" r="1.5"/>
+                            <polyline points="21 15 16 10 5 21"/>
+                        </svg>
+                    </div>
+                    <h3>Vizualizace</h3>
+                    <p>Fotorealistické rendery produktů, interiérů, exteriérů. Prezentace na nejvyšší úrovni.</p>
+                    <ul class="service-features">
+                        <li>Produktové vizualizace</li>
+                        <li>Architektonické rendery</li>
+                        <li>360° prohlídky</li>
+                        <li>Marketing materiály</li>
+                    </ul>
+                    <div class="service-price">
+                        <span class="from">od</span>
+                        <span class="price">5 000 Kč</span>
+                    </div>
+                </div>
+
+                <div class="service-card">
+                    <div class="service-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="23 7 16 12 23 17 23 7"/>
+                            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+                        </svg>
+                    </div>
+                    <h3>Animace</h3>
+                    <p>Oživte své projekty pohybem. Od jednoduchých produktových animací po komplexní sekvence.</p>
+                    <ul class="service-features">
+                        <li>Produktové animace</li>
+                        <li>Character animation</li>
+                        <li>Motion graphics</li>
+                        <li>Explainer videa</li>
+                    </ul>
+                    <div class="service-price">
+                        <span class="from">od</span>
+                        <span class="price">8 000 Kč</span>
+                    </div>
+                </div>
+
+                <div class="service-card">
+                    <div class="service-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/>
+                        </svg>
+                    </div>
+                    <h3>Game Ready Assets</h3>
+                    <p>Optimalizované modely pro herní enginy. Low-poly s kvalitními texturami.</p>
+                    <ul class="service-features">
+                        <li>LOD modely</li>
+                        <li>PBR textury</li>
+                        <li>Rigging & skinning</li>
+                        <li>Unity/Unreal export</li>
+                    </ul>
+                    <div class="service-price">
+                        <span class="from">od</span>
+                        <span class="price">3 500 Kč</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="services-cta">
+                <p>Máte specifický projekt? Kontaktujte mě pro individuální nabídku.</p>
+                <a href="#contact" class="btn btn-primary">Získat cenovou nabídku</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="contact">
+        <div class="container">
+            <div class="contact-grid">
+                <div class="contact-info">
+                    <span class="section-tag">Kontakt</span>
+                    <h2 class="section-title">Pojďme <span class="gradient-text">spolupracovat</span></h2>
+                    <p class="contact-text">
+                        Máte projekt, na kterém bychom mohli spolupracovat? Nebo jen chcete
+                        probrat možnosti? Neváhejte mě kontaktovat!
+                    </p>
+
+                    <div class="contact-methods">
+                        <a href="mailto:kraky3d@email.cz" class="contact-method">
+                            <div class="method-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                                    <polyline points="22,6 12,13 2,6"/>
+                                </svg>
+                            </div>
+                            <div class="method-info">
+                                <span class="method-label">Email</span>
+                                <span class="method-value">kraky3d@email.cz</span>
+                            </div>
+                        </a>
+
+                        <a href="#" class="contact-method">
+                            <div class="method-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/>
+                                </svg>
+                            </div>
+                            <div class="method-info">
+                                <span class="method-label">Discord</span>
+                                <span class="method-value">kraky3D#0000</span>
+                            </div>
+                        </a>
+
+                        <a href="#" class="contact-method">
+                            <div class="method-icon">
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                                </svg>
+                            </div>
+                            <div class="method-info">
+                                <span class="method-label">Instagram</span>
+                                <span class="method-value">@kraky3d</span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="contact-form-wrapper">
+                    <form id="contact-form" class="contact-form">
+                        <div class="form-group">
+                            <label for="name">Jméno</label>
+                            <input type="text" id="name" name="name" required>
+                            <span class="focus-border"></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email" required>
+                            <span class="focus-border"></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="project">Typ projektu</label>
+                            <select id="project" name="project">
+                                <option value="">Vyberte typ projektu</option>
+                                <option value="modeling">3D Modelování</option>
+                                <option value="visualization">Vizualizace</option>
+                                <option value="animation">Animace</option>
+                                <option value="game-assets">Game Assets</option>
+                                <option value="other">Jiné</option>
+                            </select>
+                            <span class="focus-border"></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="message">Zpráva</label>
+                            <textarea id="message" name="message" rows="5" required></textarea>
+                            <span class="focus-border"></span>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-full">
+                            <span>Odeslat zprávu</span>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="22" y1="2" x2="11" y2="13"/>
+                                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <a href="#" class="footer-logo">kraky<span class="accent">3D</span></a>
+                    <p>Vytvářím digitální světy z představ.</p>
+                </div>
+                <div class="footer-links">
+                    <a href="#portfolio">Portfolio</a>
+                    <a href="#about">O mně</a>
+                    <a href="#services">Služby</a>
+                    <a href="#contact">Kontakt</a>
+                </div>
+                <div class="footer-social">
+                    <a href="#" class="social-link" aria-label="ArtStation">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M0 17.723l2.027 3.505h.001a2.424 2.424 0 002.164 1.333h13.457l-2.792-4.838H0zm24-1.87l-5.725-9.908A2.422 2.422 0 0016.167 4.5H8.667l9.333 16.19L24 15.853zM8.667 12.547l3.454 5.99H4.762L8.667 12.547z"/>
+                        </svg>
+                    </a>
+                    <a href="#" class="social-link" aria-label="Instagram">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                        </svg>
+                    </a>
+                    <a href="#" class="social-link" aria-label="YouTube">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 kraky3D. Všechna práva vyhrazena.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 3D Model Viewer Modal -->
+    <div id="model-viewer-modal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close">&times;</button>
+            <div class="modal-header">
+                <h3 id="modal-title">Název projektu</h3>
+                <div class="modal-controls">
+                    <button class="control-btn" id="toggle-wireframe" title="Wireframe">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                        </svg>
+                    </button>
+                    <button class="control-btn" id="toggle-autorotate" title="Auto-rotace">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M23 4v6h-6M1 20v-6h6"/>
+                            <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+                        </svg>
+                    </button>
+                    <button class="control-btn" id="reset-camera" title="Reset kamery">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <canvas id="model-viewer-canvas"></canvas>
+                <div class="model-loading">
+                    <div class="spinner"></div>
+                    <span>Načítám model...</span>
+                </div>
+            </div>
+            <div class="modal-info">
+                <p id="modal-description">Popis projektu</p>
+                <div class="modal-tags" id="modal-tags"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Lightbox -->
+    <div id="lightbox" class="lightbox">
+        <button class="lightbox-close">&times;</button>
+        <button class="lightbox-prev">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="15 18 9 12 15 6"/>
+            </svg>
+        </button>
+        <button class="lightbox-next">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"/>
+            </svg>
+        </button>
+        <div class="lightbox-content">
+            <img id="lightbox-image" src="" alt="">
+        </div>
+        <div class="lightbox-caption">
+            <h3 id="lightbox-title"></h3>
+            <p id="lightbox-description"></p>
+        </div>
+    </div>
+
+    <!-- Back to Top -->
+    <button id="back-to-top" class="back-to-top" aria-label="Nahoru">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="18 15 12 9 6 15"/>
+        </svg>
+    </button>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="js/main.js"></script>
+</body>
+</html>

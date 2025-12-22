@@ -927,6 +927,7 @@ function loadDropzonesForEdit(project) {
 // 3D MODEL UPLOAD
 // ============================================
 let currentModelUrl = '';
+let oldModelUrlToDelete = ''; // Track old model for deletion when replacing
 
 function initModelDropzone() {
     const modelDropzone = document.getElementById('model-dropzone');
@@ -996,6 +997,13 @@ async function uploadModel(file, dropzone) {
     dropzone.classList.add('uploading');
 
     try {
+        // Delete old model if exists (when replacing)
+        if (oldModelUrlToDelete) {
+            console.log('Deleting old model:', oldModelUrlToDelete);
+            await deleteFileFromGitHub(oldModelUrlToDelete);
+            oldModelUrlToDelete = ''; // Clear after deletion
+        }
+
         // Read file as base64
         const base64Content = await fileToBase64(file);
 
@@ -1101,6 +1109,57 @@ async function uploadFileToGitHub(path, base64Content, message) {
     }
 }
 
+async function deleteFileFromGitHub(url) {
+    if (!githubToken || !url) return false;
+
+    // Extract path from raw GitHub URL
+    // Format: https://raw.githubusercontent.com/owner/repo/branch/path
+    const match = url.match(/raw\.githubusercontent\.com\/[^/]+\/[^/]+\/[^/]+\/(.+)/);
+    if (!match) return false;
+
+    const path = match[1];
+
+    try {
+        // Get file SHA first
+        const getResponse = await fetch(
+            `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${path}`,
+            {
+                headers: {
+                    'Authorization': `token ${githubToken}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            }
+        );
+
+        if (!getResponse.ok) return false;
+
+        const data = await getResponse.json();
+
+        // Delete the file
+        const deleteResponse = await fetch(
+            `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${path}`,
+            {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `token ${githubToken}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: `Delete old model: ${path}`,
+                    sha: data.sha,
+                    branch: CONFIG.branch
+                })
+            }
+        );
+
+        return deleteResponse.ok;
+    } catch (error) {
+        console.error('GitHub delete error:', error);
+        return false;
+    }
+}
+
 function showModelPreview(filename, size, dropzone) {
     const content = dropzone.querySelector('.dropzone-content');
     const preview = dropzone.querySelector('.dropzone-preview');
@@ -1141,6 +1200,7 @@ function resetModelDropzone() {
     if (preview) preview.style.display = 'none';
 
     currentModelUrl = '';
+    oldModelUrlToDelete = ''; // Clear when resetting (new project)
 }
 
 function loadModelForEdit(modelUrl) {
@@ -1150,6 +1210,8 @@ function loadModelForEdit(modelUrl) {
     if (!dropzone) return;
 
     currentModelUrl = modelUrl;
+    // Store old model URL for deletion when new model is uploaded
+    oldModelUrlToDelete = modelUrl;
     document.getElementById('project-model-url').value = modelUrl;
 
     // Extract filename from URL

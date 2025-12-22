@@ -1,5 +1,20 @@
 [
   {
+    "id": 10,
+    "title": "auto",
+    "category": "product",
+    "software": "blender",
+    "description": "hovno",
+    "thumbnail": "https://raw.githubusercontent.com/Plautusius/kraky3d/master/assets/images/1766434076685_volkswagen-kever-1954.webp",
+    "images": [
+      "https://raw.githubusercontent.com/Plautusius/kraky3d/master/assets/images/1766434031988_volkswagen-kever-1954.webp"
+    ],
+    "tags": [],
+    "has3D": false,
+    "modelUrl": "https://raw.githubusercontent.com/Plautusius/kraky3d/master/assets/models/1766434046235_Brouk1d23.glb",
+    "date": "2025-12-22"
+  },
+  {
     "id": 1,
     "title": "Futuristické město",
     "category": "environment",
@@ -10,7 +25,12 @@
       "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1200",
       "https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?w=1200"
     ],
-    "tags": ["Blender", "Cycles", "Environment", "Sci-fi"],
+    "tags": [
+      "Blender",
+      "Cycles",
+      "Environment",
+      "Sci-fi"
+    ],
     "has3D": false,
     "modelUrl": null,
     "date": "2025-01-15"
@@ -26,7 +46,12 @@
       "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=1200",
       "https://images.unsplash.com/photo-1535378917042-10a22c95931a?w=1200"
     ],
-    "tags": ["Blender", "Character", "Hard-surface", "Sci-fi"],
+    "tags": [
+      "Blender",
+      "Character",
+      "Hard-surface",
+      "Sci-fi"
+    ],
     "has3D": true,
     "modelUrl": "assets/models/robot.glb",
     "date": "2025-02-20"
@@ -42,7 +67,11 @@
       "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=1200",
       "https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=1200"
     ],
-    "tags": ["3DS Max", "Corona", "Product"],
+    "tags": [
+      "3DS Max",
+      "Corona",
+      "Product"
+    ],
     "has3D": false,
     "modelUrl": null,
     "date": "2025-03-10"
@@ -57,7 +86,12 @@
     "images": [
       "https://images.unsplash.com/photo-1577493340887-b7bfff550145?w=1200"
     ],
-    "tags": ["Blender", "Sculpting", "Character", "Fantasy"],
+    "tags": [
+      "Blender",
+      "Sculpting",
+      "Character",
+      "Fantasy"
+    ],
     "has3D": true,
     "modelUrl": "assets/models/dragon.glb",
     "date": "2025-04-05"
@@ -73,7 +107,11 @@
       "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1200",
       "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=1200"
     ],
-    "tags": ["3DS Max", "Corona", "Architecture"],
+    "tags": [
+      "3DS Max",
+      "Corona",
+      "Architecture"
+    ],
     "has3D": false,
     "modelUrl": null,
     "date": "2025-05-12"
@@ -88,7 +126,11 @@
     "images": [
       "https://images.unsplash.com/photo-1589656966895-2f33e7653819?w=1200"
     ],
-    "tags": ["Blender", "Game Asset", "PBR"],
+    "tags": [
+      "Blender",
+      "Game Asset",
+      "PBR"
+    ],
     "has3D": true,
     "modelUrl": "assets/models/sword.glb",
     "date": "2025-06-01"
@@ -104,7 +146,11 @@
       "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=1200",
       "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200"
     ],
-    "tags": ["Blender", "Cycles", "Sci-fi"],
+    "tags": [
+      "Blender",
+      "Cycles",
+      "Sci-fi"
+    ],
     "has3D": false,
     "modelUrl": null,
     "date": "2025-07-20"
@@ -119,7 +165,11 @@
     "images": [
       "https://images.unsplash.com/photo-1608889825103-eb5ed706fc64?w=1200"
     ],
-    "tags": ["Blender", "Character", "Stylized"],
+    "tags": [
+      "Blender",
+      "Character",
+      "Stylized"
+    ],
     "has3D": true,
     "modelUrl": "assets/models/character.glb",
     "date": "2025-08-15"
@@ -135,10 +185,13 @@
       "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=1200",
       "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=1200"
     ],
-    "tags": ["3DS Max", "V-Ray", "Automotive"],
+    "tags": [
+      "3DS Max",
+      "V-Ray",
+      "Automotive"
+    ],
     "has3D": false,
     "modelUrl": null,
     "date": "2025-09-01"
   }
 ]
-

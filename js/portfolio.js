@@ -110,8 +110,13 @@ function renderProjects(projectsToRender) {
     document.querySelectorAll('.view-3d').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
+            console.log('3D button clicked, project ID:', btn.dataset.id);
+            console.log('open3DViewer available:', typeof open3DViewer === 'function');
+            console.log('window.projects:', window.projects);
             if (typeof open3DViewer === 'function') {
                 open3DViewer(parseInt(btn.dataset.id));
+            } else {
+                console.error('open3DViewer function not found!');
             }
         });
     });

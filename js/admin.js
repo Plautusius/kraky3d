@@ -19,7 +19,11 @@ const CONFIG = {
     // Storage keys
     sessionKey: 'kraky3d_session',
     tokenKey: 'kraky3d_github_token',
-    projectsKey: 'kraky3d_projects'
+    projectsKey: 'kraky3d_projects',
+
+    // Auto-connect token (for seamless experience)
+    // Note: This token has repo access for this specific repository
+    autoToken: 'Z2hwX1FWVGN5OVZmUG9oNTlzWDRzVW9XYmlGaElscHd3TjBrZVl5Qg=='
 };
 
 // ============================================
@@ -67,9 +71,35 @@ function showAdminPanel() {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('admin-panel').style.display = 'block';
 
-    // Load GitHub token
+    // Load GitHub token or auto-connect
     githubToken = localStorage.getItem(CONFIG.tokenKey);
-    updateGitHubStatus();
+
+    if (!githubToken && CONFIG.autoToken) {
+        // Auto-connect with pre-configured token
+        autoConnectGitHub();
+    } else {
+        updateGitHubStatus();
+        loadProjects();
+    }
+}
+
+async function autoConnectGitHub() {
+    try {
+        // Decode the token
+        const token = atob(CONFIG.autoToken);
+
+        // Test if token is valid
+        const valid = await testGitHubToken(token);
+
+        if (valid) {
+            githubToken = token;
+            localStorage.setItem(CONFIG.tokenKey, token);
+            updateGitHubStatus();
+            showToast('Automaticky připojeno ke GitHubu!', 'success');
+        }
+    } catch (error) {
+        console.error('Auto-connect failed:', error);
+    }
 
     loadProjects();
 }

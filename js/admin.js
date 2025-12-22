@@ -23,7 +23,7 @@ const CONFIG = {
 
     // Auto-connect token (for seamless experience)
     // Note: This token has repo access for this specific repository
-    autoToken: 'Z2hwX1FWVGN5OVZmUG9oNTlzWDRzVW9XYmlGaElscHd3TjBrZVl5Qg=='
+    autoToken: 'Z2hwX09SQ3hqazNaWDFMYTJjMlZaNng3VHNsNDluM1EyNzBmM3U2RA=='
 };
 
 // ============================================

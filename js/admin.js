@@ -1,16 +1,24 @@
 /* ============================================
    KRAKY3D - ADMIN.JS
-   Admin panel, authentication, project management
+   Admin panel with GitHub API integration
    ============================================ */
 
 // ============================================
 // CONFIG
 // ============================================
-const ADMIN_CONFIG = {
+const CONFIG = {
     // Password hash (SHA-256 of "admin")
-    // Change this! Use: https://emn178.github.io/online-tools/sha256.html
     passwordHash: '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918',
-    sessionKey: 'kraky3d_admin_session',
+
+    // GitHub repo info
+    owner: 'Plautusius',
+    repo: 'kraky3d',
+    branch: 'master',
+    filePath: 'data/projects.json',
+
+    // Storage keys
+    sessionKey: 'kraky3d_session',
+    tokenKey: 'kraky3d_github_token',
     projectsKey: 'kraky3d_projects'
 };
 
@@ -19,6 +27,7 @@ const ADMIN_CONFIG = {
 // ============================================
 let projects = [];
 let editingProjectId = null;
+let githubToken = null;
 
 // ============================================
 // AUTHENTICATION
@@ -33,20 +42,20 @@ async function hashPassword(password) {
 
 async function login(password) {
     const hash = await hashPassword(password);
-    if (hash === ADMIN_CONFIG.passwordHash) {
-        sessionStorage.setItem(ADMIN_CONFIG.sessionKey, 'true');
+    if (hash === CONFIG.passwordHash) {
+        sessionStorage.setItem(CONFIG.sessionKey, 'true');
         return true;
     }
     return false;
 }
 
 function logout() {
-    sessionStorage.removeItem(ADMIN_CONFIG.sessionKey);
+    sessionStorage.removeItem(CONFIG.sessionKey);
     showLoginScreen();
 }
 
 function isLoggedIn() {
-    return sessionStorage.getItem(ADMIN_CONFIG.sessionKey) === 'true';
+    return sessionStorage.getItem(CONFIG.sessionKey) === 'true';
 }
 
 function showLoginScreen() {
@@ -57,69 +66,236 @@ function showLoginScreen() {
 function showAdminPanel() {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('admin-panel').style.display = 'block';
+
+    // Load GitHub token
+    githubToken = localStorage.getItem(CONFIG.tokenKey);
+    updateGitHubStatus();
+
     loadProjects();
-    updateStats();
+}
+
+// ============================================
+// GITHUB API
+// ============================================
+function updateGitHubStatus() {
+    const statusEl = document.getElementById('github-status');
+    const connectBtn = document.getElementById('github-connect-btn');
+    const disconnectBtn = document.getElementById('github-disconnect-btn');
+
+    if (githubToken) {
+        statusEl.innerHTML = '<span class="status-dot connected"></span> Připojeno ke GitHubu';
+        statusEl.classList.add('connected');
+        connectBtn.style.display = 'none';
+        disconnectBtn.style.display = 'inline-flex';
+    } else {
+        statusEl.innerHTML = '<span class="status-dot"></span> Nepřipojeno';
+        statusEl.classList.remove('connected');
+        connectBtn.style.display = 'inline-flex';
+        disconnectBtn.style.display = 'none';
+    }
+}
+
+function connectGitHub() {
+    document.getElementById('github-modal').classList.add('active');
+}
+
+function disconnectGitHub() {
+    if (confirm('Opravdu odpojit GitHub? Změny se nebudou ukládat online.')) {
+        localStorage.removeItem(CONFIG.tokenKey);
+        githubToken = null;
+        updateGitHubStatus();
+        showToast('GitHub odpojen', 'success');
+    }
+}
+
+function saveGitHubToken() {
+    const token = document.getElementById('github-token-input').value.trim();
+    if (!token) {
+        showToast('Zadejte token', 'error');
+        return;
+    }
+
+    // Test token
+    testGitHubToken(token).then(valid => {
+        if (valid) {
+            localStorage.setItem(CONFIG.tokenKey, token);
+            githubToken = token;
+            updateGitHubStatus();
+            closeModal('github-modal');
+            showToast('GitHub připojen!', 'success');
+            document.getElementById('github-token-input').value = '';
+        } else {
+            showToast('Neplatný token nebo chybí oprávnění', 'error');
+        }
+    });
+}
+
+async function testGitHubToken(token) {
+    try {
+        const response = await fetch(`https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}`, {
+            headers: {
+                'Authorization': `token ${token}`,
+                'Accept': 'application/vnd.github.v3+json'
+            }
+        });
+        return response.ok;
+    } catch {
+        return false;
+    }
+}
+
+async function loadProjectsFromGitHub() {
+    try {
+        const response = await fetch(
+            `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${CONFIG.filePath}`,
+            {
+                headers: {
+                    'Accept': 'application/vnd.github.v3+json',
+                    ...(githubToken && { 'Authorization': `token ${githubToken}` })
+                }
+            }
+        );
+
+        if (response.ok) {
+            const data = await response.json();
+            const content = atob(data.content);
+            return { projects: JSON.parse(content), sha: data.sha };
+        }
+    } catch (error) {
+        console.error('GitHub load error:', error);
+    }
+    return null;
+}
+
+async function saveProjectsToGitHub() {
+    if (!githubToken) {
+        showToast('Připojte GitHub pro ukládání online', 'error');
+        return false;
+    }
+
+    try {
+        // Get current file SHA
+        const current = await loadProjectsFromGitHub();
+        const sha = current?.sha;
+
+        const content = btoa(unescape(encodeURIComponent(JSON.stringify(projects, null, 2))));
+
+        const response = await fetch(
+            `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${CONFIG.filePath}`,
+            {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${githubToken}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: 'Update projects via admin panel',
+                    content: content,
+                    sha: sha,
+                    branch: CONFIG.branch
+                })
+            }
+        );
+
+        if (response.ok) {
+            showToast('Uloženo na GitHub!', 'success');
+            return true;
+        } else {
+            const error = await response.json();
+            console.error('GitHub save error:', error);
+            showToast('Chyba při ukládání: ' + (error.message || 'Neznámá chyba'), 'error');
+            return false;
+        }
+    } catch (error) {
+        console.error('GitHub save error:', error);
+        showToast('Chyba připojení ke GitHubu', 'error');
+        return false;
+    }
 }
 
 // ============================================
 // PROJECTS MANAGEMENT
 // ============================================
 async function loadProjects() {
-    // Try localStorage first
-    const localData = localStorage.getItem(ADMIN_CONFIG.projectsKey);
-    if (localData) {
-        projects = JSON.parse(localData);
-    } else {
-        // Load from JSON file
-        try {
+    const loading = document.getElementById('loading-overlay');
+    if (loading) loading.style.display = 'flex';
+
+    try {
+        // Try GitHub first
+        const githubData = await loadProjectsFromGitHub();
+        if (githubData) {
+            projects = githubData.projects;
+        } else {
+            // Fallback to local fetch
             const response = await fetch('../data/projects.json');
             projects = await response.json();
-            saveProjects();
-        } catch (error) {
-            console.error('Error loading projects:', error);
-            projects = [];
         }
+    } catch (error) {
+        console.error('Load error:', error);
+        projects = [];
     }
-    renderProjectsTable();
-}
 
-function saveProjects() {
-    localStorage.setItem(ADMIN_CONFIG.projectsKey, JSON.stringify(projects));
+    if (loading) loading.style.display = 'none';
+
+    // Save to localStorage as cache
+    localStorage.setItem(CONFIG.projectsKey, JSON.stringify(projects));
+
+    renderProjectsTable();
+    updateStats();
 }
 
 function getNextId() {
     return projects.length > 0 ? Math.max(...projects.map(p => p.id)) + 1 : 1;
 }
 
-function addProject(projectData) {
+async function addProject(projectData) {
     const project = {
         id: getNextId(),
         ...projectData,
         date: new Date().toISOString().split('T')[0]
     };
     projects.unshift(project);
-    saveProjects();
+
     renderProjectsTable();
     updateStats();
-    showToast('Projekt přidán!', 'success');
-}
 
-function updateProject(id, projectData) {
-    const index = projects.findIndex(p => p.id === id);
-    if (index !== -1) {
-        projects[index] = { ...projects[index], ...projectData };
-        saveProjects();
-        renderProjectsTable();
-        showToast('Projekt aktualizován!', 'success');
+    if (githubToken) {
+        await saveProjectsToGitHub();
+    } else {
+        localStorage.setItem(CONFIG.projectsKey, JSON.stringify(projects));
+        showToast('Projekt přidán (lokálně). Připojte GitHub pro online uložení.', 'success');
     }
 }
 
-function deleteProject(id) {
+async function updateProject(id, projectData) {
+    const index = projects.findIndex(p => p.id === id);
+    if (index !== -1) {
+        projects[index] = { ...projects[index], ...projectData };
+
+        renderProjectsTable();
+
+        if (githubToken) {
+            await saveProjectsToGitHub();
+        } else {
+            localStorage.setItem(CONFIG.projectsKey, JSON.stringify(projects));
+            showToast('Projekt aktualizován (lokálně)', 'success');
+        }
+    }
+}
+
+async function deleteProject(id) {
     projects = projects.filter(p => p.id !== id);
-    saveProjects();
+
     renderProjectsTable();
     updateStats();
-    showToast('Projekt smazán!', 'success');
+
+    if (githubToken) {
+        await saveProjectsToGitHub();
+    } else {
+        localStorage.setItem(CONFIG.projectsKey, JSON.stringify(projects));
+        showToast('Projekt smazán (lokálně)', 'success');
+    }
 }
 
 // ============================================
@@ -150,7 +326,7 @@ function renderProjectsTable() {
         <tr>
             <td>
                 <div class="project-title-cell">
-                    <img src="${project.thumbnail}" alt="${project.title}" class="project-thumb">
+                    <img src="${project.thumbnail}" alt="${project.title}" class="project-thumb" onerror="this.src='https://via.placeholder.com/80x50?text=No+Image'">
                     <div class="project-title-text">
                         <h4>${project.title}</h4>
                         <span>${project.date || 'N/A'}</span>
@@ -159,7 +335,7 @@ function renderProjectsTable() {
             </td>
             <td>${getCategoryName(project.category)}</td>
             <td>
-                <span class="badge badge-${project.software}">${project.software.toUpperCase()}</span>
+                <span class="badge badge-${project.software}">${project.software?.toUpperCase() || 'N/A'}</span>
             </td>
             <td>
                 ${project.has3D ? '<span class="badge badge-3d">3D</span>' : '-'}
@@ -187,14 +363,15 @@ function renderProjectsTable() {
 
 function getCategoryName(category) {
     const names = { character: 'Postava', environment: 'Prostředí', product: 'Produkt' };
-    return names[category] || category;
+    return names[category] || category || 'N/A';
 }
 
 function updateStats() {
-    document.getElementById('stat-total').textContent = projects.length;
-    document.getElementById('stat-blender').textContent = projects.filter(p => p.software === 'blender').length;
-    document.getElementById('stat-3dsmax').textContent = projects.filter(p => p.software === '3dsmax').length;
-    document.getElementById('stat-3d').textContent = projects.filter(p => p.has3D).length;
+    const el = (id, val) => { const e = document.getElementById(id); if(e) e.textContent = val; };
+    el('stat-total', projects.length);
+    el('stat-blender', projects.filter(p => p.software === 'blender').length);
+    el('stat-3dsmax', projects.filter(p => p.software === '3dsmax').length);
+    el('stat-3d', projects.filter(p => p.has3D).length);
 }
 
 // ============================================
@@ -218,33 +395,30 @@ function openEditModal(id) {
     editingProjectId = id;
     document.getElementById('modal-title-text').textContent = 'Upravit projekt';
 
-    // Fill form
-    document.getElementById('project-title').value = project.title;
-    document.getElementById('project-category').value = project.category;
-    document.getElementById('project-software').value = project.software;
-    document.getElementById('project-description').value = project.description;
-    document.getElementById('project-thumbnail').value = project.thumbnail;
-    document.getElementById('project-has3d').checked = project.has3D;
+    document.getElementById('project-title').value = project.title || '';
+    document.getElementById('project-category').value = project.category || '';
+    document.getElementById('project-software').value = project.software || '';
+    document.getElementById('project-description').value = project.description || '';
+    document.getElementById('project-thumbnail').value = project.thumbnail || '';
+    document.getElementById('project-has3d').checked = project.has3D || false;
     document.getElementById('project-model-url').value = project.modelUrl || '';
 
     updateThumbnailPreview(project.thumbnail);
 
-    // Images
     const imagesList = document.getElementById('images-list');
     imagesList.innerHTML = '';
-    project.images?.forEach(url => addImageInput(url));
+    (project.images || []).forEach(url => addImageInput(url));
     if (!project.images?.length) addImageInput();
 
-    // Tags
     const tagsContainer = document.getElementById('tags-container');
     tagsContainer.innerHTML = '';
-    project.tags?.forEach(tag => addTag(tag));
+    (project.tags || []).forEach(tag => addTag(tag));
 
     document.getElementById('project-modal').classList.add('active');
 }
 
 function closeModal(modalId) {
-    document.getElementById(modalId).classList.remove('active');
+    document.getElementById(modalId)?.classList.remove('active');
 }
 
 function confirmDelete(id) {
@@ -264,8 +438,10 @@ function confirmDelete(id) {
 // ============================================
 function updateThumbnailPreview(url) {
     const preview = document.getElementById('thumbnail-preview');
+    if (!preview) return;
+
     if (url) {
-        preview.innerHTML = `<img src="${url}" alt="Preview">`;
+        preview.innerHTML = `<img src="${url}" alt="Preview" onerror="this.parentElement.classList.remove('has-image'); this.outerHTML='<span>Chyba načítání</span>'">`;
         preview.classList.add('has-image');
     } else {
         preview.innerHTML = `
@@ -288,8 +464,7 @@ function addImageInput(value = '') {
         <input type="url" class="image-url" value="${value}" placeholder="https://example.com/image.jpg">
         <button type="button" onclick="this.parentElement.remove()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="6" x2="6" y2="18"/>
-                <line x1="6" y1="6" x2="18" y2="18"/>
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
             </svg>
         </button>
     `;
@@ -300,10 +475,7 @@ function addTag(tagText) {
     const container = document.getElementById('tags-container');
     const tag = document.createElement('span');
     tag.className = 'tag';
-    tag.innerHTML = `
-        ${tagText}
-        <button type="button" onclick="this.parentElement.remove()">&times;</button>
-    `;
+    tag.innerHTML = `${tagText}<button type="button" onclick="this.parentElement.remove()">&times;</button>`;
     container.appendChild(tag);
 }
 
@@ -318,7 +490,7 @@ function handleTagInput(e) {
     }
 }
 
-function saveProject() {
+async function saveProject() {
     const form = document.getElementById('project-form');
     if (!form.checkValidity()) {
         form.reportValidity();
@@ -332,25 +504,27 @@ function saveProject() {
     const tags = Array.from(document.querySelectorAll('#tags-container .tag'))
         .map(tag => tag.textContent.replace('×', '').trim());
 
+    const thumbnail = document.getElementById('project-thumbnail').value.trim();
+
     const projectData = {
         title: document.getElementById('project-title').value.trim(),
         category: document.getElementById('project-category').value,
         software: document.getElementById('project-software').value,
         description: document.getElementById('project-description').value.trim(),
-        thumbnail: document.getElementById('project-thumbnail').value.trim(),
-        images: images.length ? images : [document.getElementById('project-thumbnail').value.trim()],
+        thumbnail: thumbnail,
+        images: images.length ? images : [thumbnail],
         tags: tags,
         has3D: document.getElementById('project-has3d').checked,
         modelUrl: document.getElementById('project-model-url').value.trim() || null
     };
 
-    if (editingProjectId) {
-        updateProject(editingProjectId, projectData);
-    } else {
-        addProject(projectData);
-    }
-
     closeModal('project-modal');
+
+    if (editingProjectId) {
+        await updateProject(editingProjectId, projectData);
+    } else {
+        await addProject(projectData);
+    }
 }
 
 // ============================================
@@ -367,20 +541,25 @@ function exportProjects() {
     a.click();
 
     URL.revokeObjectURL(url);
-    showToast('Projekty exportovány! Nahraj soubor do data/projects.json', 'success');
+    showToast('JSON exportován!', 'success');
 }
 
 function importProjects(file) {
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
         try {
             const imported = JSON.parse(e.target.result);
             if (Array.isArray(imported)) {
                 projects = imported;
-                saveProjects();
                 renderProjectsTable();
                 updateStats();
-                showToast(`Importováno ${imported.length} projektů!`, 'success');
+
+                if (githubToken) {
+                    await saveProjectsToGitHub();
+                } else {
+                    localStorage.setItem(CONFIG.projectsKey, JSON.stringify(projects));
+                    showToast(`Importováno ${imported.length} projektů (lokálně)`, 'success');
+                }
             } else {
                 showToast('Neplatný formát souboru', 'error');
             }
@@ -391,12 +570,19 @@ function importProjects(file) {
     reader.readAsText(file);
 }
 
-function resetToDefault() {
-    if (confirm('Opravdu chcete resetovat projekty na výchozí hodnoty?')) {
-        localStorage.removeItem(ADMIN_CONFIG.projectsKey);
-        loadProjects();
-        showToast('Projekty resetovány', 'success');
+async function syncWithGitHub() {
+    if (!githubToken) {
+        showToast('Nejdříve připojte GitHub', 'error');
+        return;
     }
+
+    const loading = document.getElementById('loading-overlay');
+    if (loading) loading.style.display = 'flex';
+
+    await loadProjects();
+
+    if (loading) loading.style.display = 'none';
+    showToast('Synchronizováno s GitHubem', 'success');
 }
 
 // ============================================
@@ -404,6 +590,8 @@ function resetToDefault() {
 // ============================================
 function showToast(message, type = 'success') {
     const container = document.getElementById('toast-container');
+    if (!container) return;
+
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
 
@@ -425,41 +613,34 @@ function showToast(message, type = 'success') {
 // ============================================
 document.addEventListener('DOMContentLoaded', () => {
     // Login form
-    const loginForm = document.getElementById('login-form');
-    if (loginForm) {
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const password = document.getElementById('login-password').value;
-            const errorEl = document.getElementById('login-error');
+    document.getElementById('login-form')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const password = document.getElementById('login-password').value;
+        const errorEl = document.getElementById('login-error');
 
-            if (await login(password)) {
-                showAdminPanel();
-            } else {
-                errorEl.classList.add('show');
-                setTimeout(() => errorEl.classList.remove('show'), 3000);
-            }
-        });
-    }
+        if (await login(password)) {
+            showAdminPanel();
+        } else {
+            errorEl?.classList.add('show');
+            setTimeout(() => errorEl?.classList.remove('show'), 3000);
+        }
+    });
 
     // Thumbnail preview
-    const thumbnailInput = document.getElementById('project-thumbnail');
-    if (thumbnailInput) {
-        thumbnailInput.addEventListener('input', (e) => updateThumbnailPreview(e.target.value));
-    }
+    document.getElementById('project-thumbnail')?.addEventListener('input', (e) => {
+        updateThumbnailPreview(e.target.value);
+    });
 
     // Tags input
-    const tagsInput = document.getElementById('tags-input');
-    if (tagsInput) {
-        tagsInput.addEventListener('keydown', handleTagInput);
-    }
+    document.getElementById('tags-input')?.addEventListener('keydown', handleTagInput);
 
     // Import file
-    const importInput = document.getElementById('import-file');
-    if (importInput) {
-        importInput.addEventListener('change', (e) => {
-            if (e.target.files[0]) importProjects(e.target.files[0]);
-        });
-    }
+    document.getElementById('import-file')?.addEventListener('change', (e) => {
+        if (e.target.files[0]) {
+            importProjects(e.target.files[0]);
+            e.target.value = '';
+        }
+    });
 
     // Check session
     if (isLoggedIn()) {

@@ -23,10 +23,14 @@ async function loadProjects() {
         const response = await fetch('data/projects.json' + cacheBuster);
         projects = await response.json();
 
+        // Update global reference
+        window.projects = projects;
+
         renderProjects(projects);
     } catch (error) {
         console.error('Error loading projects:', error);
         projects = getDemoProjects();
+        window.projects = projects;
         renderProjects(projects);
     } finally {
         if (loading) loading.classList.remove('active');

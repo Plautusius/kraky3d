@@ -71,13 +71,11 @@ function showAdminPanel() {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('admin-panel').style.display = 'block';
 
-    // Load GitHub token or auto-connect
-    githubToken = localStorage.getItem(CONFIG.tokenKey);
-
-    if (!githubToken && CONFIG.autoToken) {
-        // Auto-connect with pre-configured token
+    // Always try auto-connect first if autoToken exists
+    if (CONFIG.autoToken) {
         autoConnectGitHub();
     } else {
+        githubToken = localStorage.getItem(CONFIG.tokenKey);
         updateGitHubStatus();
         loadProjects();
     }

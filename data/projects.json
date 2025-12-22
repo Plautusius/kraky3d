@@ -1,25 +1,10 @@
 [
   {
-    "id": 10,
-    "title": "fantasy",
-    "category": "character",
-    "software": "blender",
-    "description": "",
-    "thumbnail": "https://raw.githubusercontent.com/Plautusius/kraky3d/master/assets/images/1766432845269_A_traditional_illustration__likely_created_using_w_-_kopie.png",
-    "images": [
-      "https://raw.githubusercontent.com/Plautusius/kraky3d/master/assets/images/1766432845269_A_traditional_illustration__likely_created_using_w_-_kopie.png"
-    ],
-    "tags": [],
-    "has3D": false,
-    "modelUrl": null,
-    "date": "2025-12-22"
-  },
-  {
     "id": 1,
-    "title": "FuturistickÃ© mÄsto",
+    "title": "FuturistickÃÂ© mÃÂsto",
     "category": "environment",
     "software": "blender",
-    "description": "Sci-fi mÄstskÃ¡ krajina s neonovÃ½mi svÄtly a kybernetickou architekturou. Projekt kombinuje hard-surface modeling s procedurÃ¡lnÃ­mi texturami.",
+    "description": "Sci-fi mÃÂstskÃÂ¡ krajina s neonovÃÂ½mi svÃÂtly a kybernetickou architekturou. Projekt kombinuje hard-surface modeling s procedurÃÂ¡lnÃÂ­mi texturami.",
     "thumbnail": "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&h=500&fit=crop",
     "images": [
       "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1200",
@@ -37,10 +22,10 @@
   },
   {
     "id": 2,
-    "title": "KybernetickÃ½ robot",
+    "title": "KybernetickÃÂ½ robot",
     "category": "character",
     "software": "blender",
-    "description": "DetailnÃ­ model sci-fi robota s procedurÃ¡lnÃ­mi texturami a emisivnÃ­mi materiÃ¡ly. High-poly verze s 2M polygony.",
+    "description": "DetailnÃÂ­ model sci-fi robota s procedurÃÂ¡lnÃÂ­mi texturami a emisivnÃÂ­mi materiÃÂ¡ly. High-poly verze s 2M polygony.",
     "thumbnail": "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&h=500&fit=crop",
     "images": [
       "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=1200",
@@ -58,10 +43,10 @@
   },
   {
     "id": 3,
-    "title": "LuxusnÃ­ hodinky",
+    "title": "LuxusnÃÂ­ hodinky",
     "category": "product",
     "software": "3dsmax",
-    "description": "ProduktovÃ¡ vizualizace luxusnÃ­ch hodinek pro reklamnÃ­ kampaÅ. FotorealistickÃ© rendery s Corona Renderer.",
+    "description": "ProduktovÃÂ¡ vizualizace luxusnÃÂ­ch hodinek pro reklamnÃÂ­ kampaÃÂ. FotorealistickÃÂ© rendery s Corona Renderer.",
     "thumbnail": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&h=500&fit=crop",
     "images": [
       "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=1200",
@@ -82,7 +67,7 @@
     "title": "Fantasy drak",
     "category": "character",
     "software": "blender",
-    "description": "OrganickÃ½ model draka vytvoÅenÃ½ pomocÃ­ sculpting technik. DetailnÃ­ Å¡upiny a textura kÅ¯Å¾e.",
+    "description": "OrganickÃÂ½ model draka vytvoÃÂenÃÂ½ pomocÃÂ­ sculpting technik. DetailnÃÂ­ ÃÂ¡upiny a textura kÃÂ¯ÃÂ¾e.",
     "thumbnail": "https://images.unsplash.com/photo-1577493340887-b7bfff550145?w=800&h=500&fit=crop",
     "images": [
       "https://images.unsplash.com/photo-1577493340887-b7bfff550145?w=1200"
@@ -99,10 +84,10 @@
   },
   {
     "id": 5,
-    "title": "ModernÃ­ interiÃ©r",
+    "title": "ModernÃÂ­ interiÃÂ©r",
     "category": "environment",
     "software": "3dsmax",
-    "description": "ArchitektonickÃ¡ vizualizace modernÃ­ho obÃ½vacÃ­ho pokoje. RealistickÃ© osvÄtlenÃ­ a materiÃ¡ly.",
+    "description": "ArchitektonickÃÂ¡ vizualizace modernÃÂ­ho obÃÂ½vacÃÂ­ho pokoje. RealistickÃÂ© osvÃÂtlenÃÂ­ a materiÃÂ¡ly.",
     "thumbnail": "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=800&h=500&fit=crop",
     "images": [
       "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1200",
@@ -120,10 +105,10 @@
   },
   {
     "id": 6,
-    "title": "HernÃ­ meÄ",
+    "title": "HernÃÂ­ meÃÂ",
     "category": "product",
     "software": "blender",
-    "description": "Low-poly hernÃ­ asset optimalizovanÃ½ pro real-time rendering. KompletnÃ­ PBR texture set.",
+    "description": "Low-poly hernÃÂ­ asset optimalizovanÃÂ½ pro real-time rendering. KompletnÃÂ­ PBR texture set.",
     "thumbnail": "https://images.unsplash.com/photo-1589656966895-2f33e7653819?w=800&h=500&fit=crop",
     "images": [
       "https://images.unsplash.com/photo-1589656966895-2f33e7653819?w=1200"
@@ -140,10 +125,10 @@
   },
   {
     "id": 7,
-    "title": "VesmÃ­rnÃ¡ stanice",
+    "title": "VesmÃÂ­rnÃÂ¡ stanice",
     "category": "environment",
     "software": "blender",
-    "description": "Sci-fi vesmÃ­rnÃ¡ stanice s detailnÃ­m exteriÃ©rem i interiÃ©rem. ModulÃ¡rnÃ­ design.",
+    "description": "Sci-fi vesmÃÂ­rnÃÂ¡ stanice s detailnÃÂ­m exteriÃÂ©rem i interiÃÂ©rem. ModulÃÂ¡rnÃÂ­ design.",
     "thumbnail": "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=800&h=500&fit=crop",
     "images": [
       "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=1200",
@@ -161,10 +146,10 @@
   },
   {
     "id": 8,
-    "title": "StylizovanÃ¡ postava",
+    "title": "StylizovanÃÂ¡ postava",
     "category": "character",
     "software": "blender",
-    "description": "Cartoon-style postava pro mobilnÃ­ hru. PlnÄ rigged s animacemi.",
+    "description": "Cartoon-style postava pro mobilnÃÂ­ hru. PlnÃÂ rigged s animacemi.",
     "thumbnail": "https://images.unsplash.com/photo-1608889825103-eb5ed706fc64?w=800&h=500&fit=crop",
     "images": [
       "https://images.unsplash.com/photo-1608889825103-eb5ed706fc64?w=1200"
@@ -181,10 +166,10 @@
   },
   {
     "id": 9,
-    "title": "SportovnÃ­ auto",
+    "title": "SportovnÃÂ­ auto",
     "category": "product",
     "software": "3dsmax",
-    "description": "DetailnÃ­ model sportovnÃ­ho auta pro automobilovou reklamu. Studio render.",
+    "description": "DetailnÃÂ­ model sportovnÃÂ­ho auta pro automobilovou reklamu. Studio render.",
     "thumbnail": "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=800&h=500&fit=crop",
     "images": [
       "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=1200",

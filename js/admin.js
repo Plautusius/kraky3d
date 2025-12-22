@@ -1014,6 +1014,8 @@ async function uploadModel(file, dropzone) {
         if (url) {
             currentModelUrl = url;
             document.getElementById('project-model-url').value = url;
+            // Auto-check "has 3D" checkbox
+            document.getElementById('project-has3d').checked = true;
             showModelPreview(file.name, file.size, dropzone);
             showToast('3D model nahrán!', 'success');
         } else {

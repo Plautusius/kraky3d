@@ -344,28 +344,47 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="project-thumbnail">Náhledový obrázek (URL) *</label>
-                        <input type="url" id="project-thumbnail" required placeholder="https://...">
-                        <div id="thumbnail-preview" class="image-preview">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                                <circle cx="8.5" cy="8.5" r="1.5"/>
-                                <polyline points="21 15 16 10 5 21"/>
-                            </svg>
-                            <span>Náhled obrázku</span>
+                        <label>Náhledový obrázek *</label>
+                        <div id="thumbnail-dropzone" class="dropzone">
+                            <input type="file" id="thumbnail-file" accept="image/*" style="display:none">
+                            <div class="dropzone-content">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                                    <polyline points="17 8 12 3 7 8"/>
+                                    <line x1="12" y1="3" x2="12" y2="15"/>
+                                </svg>
+                                <p>Přetáhněte obrázek sem</p>
+                                <span>nebo klikněte pro výběr</span>
+                            </div>
+                            <div class="dropzone-preview" style="display:none">
+                                <img id="thumbnail-preview-img" src="" alt="Preview">
+                                <button type="button" class="remove-preview" onclick="removeThumbnail()">&times;</button>
+                            </div>
+                            <div class="dropzone-loading" style="display:none">
+                                <div class="spinner"></div>
+                                <span>Nahrávám...</span>
+                            </div>
                         </div>
+                        <input type="hidden" id="project-thumbnail" required>
+                        <p class="form-hint">Podporované formáty: JPG, PNG, GIF, WebP</p>
                     </div>
 
                     <div class="form-group">
                         <label>Obrázky galerie</label>
-                        <div id="images-list" class="images-list"></div>
-                        <button type="button" class="add-image-btn" onclick="addImageInput()">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <line x1="12" y1="5" x2="12" y2="19"/>
-                                <line x1="5" y1="12" x2="19" y2="12"/>
-                            </svg>
-                            Přidat obrázek
-                        </button>
+                        <div id="gallery-dropzone" class="dropzone dropzone-gallery">
+                            <input type="file" id="gallery-files" accept="image/*" multiple style="display:none">
+                            <div class="dropzone-content">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                                    <polyline points="21 15 16 10 5 21"/>
+                                </svg>
+                                <p>Přetáhněte obrázky sem</p>
+                                <span>nebo klikněte pro výběr více</span>
+                            </div>
+                        </div>
+                        <div id="gallery-previews" class="gallery-previews"></div>
+                        <div id="images-list" class="images-list" style="display:none"></div>
                     </div>
 
                     <div class="form-group">

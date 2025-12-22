@@ -381,10 +381,9 @@ function openAddModal() {
     editingProjectId = null;
     document.getElementById('modal-title-text').textContent = 'Přidat projekt';
     document.getElementById('project-form').reset();
-    document.getElementById('images-list').innerHTML = '';
     document.getElementById('tags-container').innerHTML = '';
-    updateThumbnailPreview('');
-    addImageInput();
+    resetDropzones();
+    document.getElementById('project-thumbnail').value = '';
     document.getElementById('project-modal').classList.add('active');
 }
 
@@ -399,16 +398,12 @@ function openEditModal(id) {
     document.getElementById('project-category').value = project.category || '';
     document.getElementById('project-software').value = project.software || '';
     document.getElementById('project-description').value = project.description || '';
-    document.getElementById('project-thumbnail').value = project.thumbnail || '';
     document.getElementById('project-has3d').checked = project.has3D || false;
     document.getElementById('project-model-url').value = project.modelUrl || '';
 
-    updateThumbnailPreview(project.thumbnail);
-
-    const imagesList = document.getElementById('images-list');
-    imagesList.innerHTML = '';
-    (project.images || []).forEach(url => addImageInput(url));
-    if (!project.images?.length) addImageInput();
+    // Load dropzones with existing data
+    resetDropzones();
+    loadDropzonesForEdit(project);
 
     const tagsContainer = document.getElementById('tags-container');
     tagsContainer.innerHTML = '';
@@ -497,14 +492,18 @@ async function saveProject() {
         return;
     }
 
-    const images = Array.from(document.querySelectorAll('.image-url'))
-        .map(input => input.value.trim())
-        .filter(url => url);
+    const thumbnail = document.getElementById('project-thumbnail').value.trim();
+
+    if (!thumbnail) {
+        showToast('Přidejte náhledový obrázek', 'error');
+        return;
+    }
 
     const tags = Array.from(document.querySelectorAll('#tags-container .tag'))
         .map(tag => tag.textContent.replace('×', '').trim());
 
-    const thumbnail = document.getElementById('project-thumbnail').value.trim();
+    // Use galleryImages from dropzone, fallback to thumbnail
+    const images = galleryImages.length > 0 ? [...galleryImages] : [thumbnail];
 
     const projectData = {
         title: document.getElementById('project-title').value.trim(),
@@ -512,7 +511,7 @@ async function saveProject() {
         software: document.getElementById('project-software').value,
         description: document.getElementById('project-description').value.trim(),
         thumbnail: thumbnail,
-        images: images.length ? images : [thumbnail],
+        images: images,
         tags: tags,
         has3D: document.getElementById('project-has3d').checked,
         modelUrl: document.getElementById('project-model-url').value.trim() || null
@@ -609,6 +608,289 @@ function showToast(message, type = 'success') {
 }
 
 // ============================================
+// DROPZONE & IMAGE UPLOAD
+// ============================================
+const IMGBB_API_KEY = 'c2dd38a9a28fae3990bc9b3e4ec26eb3'; // Free API key
+let galleryImages = [];
+
+function initDropzones() {
+    const thumbnailDropzone = document.getElementById('thumbnail-dropzone');
+    const galleryDropzone = document.getElementById('gallery-dropzone');
+
+    if (thumbnailDropzone) {
+        setupDropzone(thumbnailDropzone, 'thumbnail');
+    }
+
+    if (galleryDropzone) {
+        setupDropzone(galleryDropzone, 'gallery');
+    }
+}
+
+function setupDropzone(dropzone, type) {
+    const fileInput = dropzone.querySelector('input[type="file"]');
+
+    // Click to select file
+    dropzone.addEventListener('click', (e) => {
+        if (e.target.closest('.remove-preview')) return;
+        fileInput?.click();
+    });
+
+    // File input change
+    fileInput?.addEventListener('change', (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length > 0) {
+            if (type === 'thumbnail') {
+                uploadThumbnail(files[0], dropzone);
+            } else {
+                files.forEach(file => uploadGalleryImage(file));
+            }
+        }
+        e.target.value = '';
+    });
+
+    // Drag events
+    ['dragenter', 'dragover'].forEach(event => {
+        dropzone.addEventListener(event, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropzone.classList.add('dragover');
+        });
+    });
+
+    ['dragleave', 'drop'].forEach(event => {
+        dropzone.addEventListener(event, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropzone.classList.remove('dragover');
+        });
+    });
+
+    // Handle drop
+    dropzone.addEventListener('drop', (e) => {
+        const files = Array.from(e.dataTransfer.files);
+        const text = e.dataTransfer.getData('text');
+
+        // Check if URL was dropped
+        if (text && isValidImageUrl(text)) {
+            if (type === 'thumbnail') {
+                setThumbnailFromUrl(text, dropzone);
+            } else {
+                addGalleryImageFromUrl(text);
+            }
+            return;
+        }
+
+        // Handle files
+        if (files.length > 0) {
+            const imageFiles = files.filter(f => f.type.startsWith('image/'));
+            if (type === 'thumbnail' && imageFiles[0]) {
+                uploadThumbnail(imageFiles[0], dropzone);
+            } else {
+                imageFiles.forEach(file => uploadGalleryImage(file));
+            }
+        }
+    });
+
+    // Paste event for URL
+    dropzone.addEventListener('paste', (e) => {
+        const text = e.clipboardData?.getData('text');
+        if (text && isValidImageUrl(text)) {
+            e.preventDefault();
+            if (type === 'thumbnail') {
+                setThumbnailFromUrl(text, dropzone);
+            } else {
+                addGalleryImageFromUrl(text);
+            }
+        }
+    });
+
+    // Make dropzone focusable for paste
+    dropzone.setAttribute('tabindex', '0');
+}
+
+function isValidImageUrl(url) {
+    try {
+        const parsed = new URL(url);
+        return /\.(jpg|jpeg|png|gif|webp|svg)(\?.*)?$/i.test(parsed.pathname) ||
+               url.includes('unsplash.com') ||
+               url.includes('images.unsplash.com') ||
+               url.includes('imgur.com') ||
+               url.includes('imgbb.com');
+    } catch {
+        return false;
+    }
+}
+
+async function uploadToImgBB(file) {
+    const formData = new FormData();
+    formData.append('image', file);
+
+    try {
+        const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+            method: 'POST',
+            body: formData
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            return data.data.url;
+        }
+    } catch (error) {
+        console.error('ImgBB upload error:', error);
+    }
+    return null;
+}
+
+async function uploadThumbnail(file, dropzone) {
+    const content = dropzone.querySelector('.dropzone-content');
+    const preview = dropzone.querySelector('.dropzone-preview');
+    const loading = dropzone.querySelector('.dropzone-loading');
+    const hiddenInput = document.getElementById('project-thumbnail');
+
+    // Show loading
+    content.style.display = 'none';
+    preview.style.display = 'none';
+    loading.style.display = 'flex';
+    dropzone.classList.add('uploading');
+
+    const url = await uploadToImgBB(file);
+
+    loading.style.display = 'none';
+    dropzone.classList.remove('uploading');
+
+    if (url) {
+        showThumbnailPreview(url, dropzone);
+        hiddenInput.value = url;
+        showToast('Obrázek nahrán!', 'success');
+    } else {
+        content.style.display = 'flex';
+        showToast('Nepodařilo se nahrát obrázek', 'error');
+    }
+}
+
+function setThumbnailFromUrl(url, dropzone) {
+    const hiddenInput = document.getElementById('project-thumbnail');
+    showThumbnailPreview(url, dropzone);
+    hiddenInput.value = url;
+    showToast('URL přidána!', 'success');
+}
+
+function showThumbnailPreview(url, dropzone) {
+    const content = dropzone.querySelector('.dropzone-content');
+    const preview = dropzone.querySelector('.dropzone-preview');
+    const previewImg = document.getElementById('thumbnail-preview-img');
+
+    content.style.display = 'none';
+    preview.style.display = 'block';
+    previewImg.src = url;
+}
+
+function removeThumbnail() {
+    const dropzone = document.getElementById('thumbnail-dropzone');
+    const content = dropzone.querySelector('.dropzone-content');
+    const preview = dropzone.querySelector('.dropzone-preview');
+    const hiddenInput = document.getElementById('project-thumbnail');
+
+    content.style.display = 'flex';
+    preview.style.display = 'none';
+    hiddenInput.value = '';
+}
+
+async function uploadGalleryImage(file) {
+    const container = document.getElementById('gallery-previews');
+
+    // Create preview item
+    const item = document.createElement('div');
+    item.className = 'gallery-preview-item uploading';
+    item.innerHTML = `
+        <img src="${URL.createObjectURL(file)}" alt="Uploading...">
+        <div class="upload-progress"><div class="upload-progress-bar" style="width: 30%"></div></div>
+    `;
+    container.appendChild(item);
+
+    const url = await uploadToImgBB(file);
+
+    if (url) {
+        galleryImages.push(url);
+        item.classList.remove('uploading');
+        item.innerHTML = `
+            <img src="${url}" alt="Gallery image">
+            <button type="button" class="remove-preview" onclick="removeGalleryImage(this, '${url}')">&times;</button>
+        `;
+        showToast('Obrázek nahrán!', 'success');
+    } else {
+        item.remove();
+        showToast('Nepodařilo se nahrát obrázek', 'error');
+    }
+}
+
+function addGalleryImageFromUrl(url) {
+    const container = document.getElementById('gallery-previews');
+
+    galleryImages.push(url);
+
+    const item = document.createElement('div');
+    item.className = 'gallery-preview-item';
+    item.innerHTML = `
+        <img src="${url}" alt="Gallery image">
+        <button type="button" class="remove-preview" onclick="removeGalleryImage(this, '${url}')">&times;</button>
+    `;
+    container.appendChild(item);
+    showToast('URL přidána!', 'success');
+}
+
+function removeGalleryImage(button, url) {
+    galleryImages = galleryImages.filter(u => u !== url);
+    button.closest('.gallery-preview-item').remove();
+}
+
+function resetDropzones() {
+    const thumbnailDropzone = document.getElementById('thumbnail-dropzone');
+    if (thumbnailDropzone) {
+        const content = thumbnailDropzone.querySelector('.dropzone-content');
+        const preview = thumbnailDropzone.querySelector('.dropzone-preview');
+        if (content) content.style.display = 'flex';
+        if (preview) preview.style.display = 'none';
+    }
+
+    const galleryPreviews = document.getElementById('gallery-previews');
+    if (galleryPreviews) galleryPreviews.innerHTML = '';
+
+    galleryImages = [];
+}
+
+function loadDropzonesForEdit(project) {
+    // Thumbnail
+    if (project.thumbnail) {
+        const dropzone = document.getElementById('thumbnail-dropzone');
+        if (dropzone) {
+            setThumbnailFromUrl(project.thumbnail, dropzone);
+            document.getElementById('project-thumbnail').value = project.thumbnail;
+        }
+    }
+
+    // Gallery
+    galleryImages = [];
+    const container = document.getElementById('gallery-previews');
+    if (container) container.innerHTML = '';
+
+    (project.images || []).forEach(url => {
+        galleryImages.push(url);
+        const item = document.createElement('div');
+        item.className = 'gallery-preview-item';
+        item.innerHTML = `
+            <img src="${url}" alt="Gallery image">
+            <button type="button" class="remove-preview" onclick="removeGalleryImage(this, '${url}')">&times;</button>
+        `;
+        container?.appendChild(item);
+    });
+}
+
+// Make functions global
+window.removeThumbnail = removeThumbnail;
+window.removeGalleryImage = removeGalleryImage;
+
+// ============================================
 // INITIALIZATION
 // ============================================
 document.addEventListener('DOMContentLoaded', () => {
@@ -641,6 +923,9 @@ document.addEventListener('DOMContentLoaded', () => {
             e.target.value = '';
         }
     });
+
+    // Initialize dropzones
+    initDropzones();
 
     // Check session
     if (isLoggedIn()) {

@@ -18,14 +18,10 @@ async function loadProjects() {
     try {
         if (loading) loading.classList.add('active');
 
-        // Try loading from localStorage first (for admin changes)
-        const localData = localStorage.getItem('kraky3d_projects');
-        if (localData) {
-            projects = JSON.parse(localData);
-        } else {
-            const response = await fetch('data/projects.json');
-            projects = await response.json();
-        }
+        // Always fetch fresh data with cache busting
+        const cacheBuster = `?t=${Date.now()}`;
+        const response = await fetch('data/projects.json' + cacheBuster);
+        projects = await response.json();
 
         renderProjects(projects);
     } catch (error) {

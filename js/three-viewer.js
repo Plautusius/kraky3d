@@ -111,8 +111,22 @@ let isWireframe = false;
 let isAutoRotate = true;
 
 function open3DViewer(projectId) {
+    console.log('Opening 3D viewer for project:', projectId);
     const project = window.projects?.find(p => p.id === projectId);
-    if (!project || !project.has3D || !modelModal) return;
+    console.log('Found project:', project);
+
+    if (!project) {
+        console.error('Project not found');
+        return;
+    }
+    if (!project.has3D) {
+        console.error('Project has3D is false');
+        return;
+    }
+    if (!modelModal) {
+        console.error('modelModal element not found');
+        return;
+    }
 
     document.getElementById('modal-title').textContent = project.title;
     document.getElementById('modal-description').textContent = project.description;

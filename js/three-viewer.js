@@ -185,11 +185,55 @@ function loadModel(url) {
     const loading = document.querySelector('.model-loading');
     if (loading) loading.classList.remove('hidden');
 
-    // Create placeholder for demo
-    setTimeout(() => {
+    // Remove current model
+    if (currentModel && modelScene) {
+        modelScene.remove(currentModel);
+        currentModel = null;
+    }
+
+    // Check if URL exists
+    if (!url) {
         createPlaceholderModel();
         if (loading) loading.classList.add('hidden');
-    }, 1000);
+        return;
+    }
+
+    // Load GLB/GLTF model
+    const loader = new THREE.GLTFLoader();
+
+    loader.load(
+        url,
+        (gltf) => {
+            currentModel = gltf.scene;
+
+            // Center and scale model
+            const box = new THREE.Box3().setFromObject(currentModel);
+            const center = box.getCenter(new THREE.Vector3());
+            const size = box.getSize(new THREE.Vector3());
+
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const scale = 2 / maxDim;
+            currentModel.scale.setScalar(scale);
+
+            currentModel.position.sub(center.multiplyScalar(scale));
+            currentModel.position.y -= (box.min.y * scale);
+
+            modelScene.add(currentModel);
+
+            if (loading) loading.classList.add('hidden');
+            console.log('Model loaded:', url);
+        },
+        (progress) => {
+            // Loading progress
+            const percent = (progress.loaded / progress.total * 100).toFixed(0);
+            console.log('Loading:', percent + '%');
+        },
+        (error) => {
+            console.error('Error loading model:', error);
+            createPlaceholderModel();
+            if (loading) loading.classList.add('hidden');
+        }
+    );
 }
 
 function createPlaceholderModel() {

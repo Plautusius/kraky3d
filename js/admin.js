@@ -85,20 +85,29 @@ async function autoConnectGitHub() {
     try {
         // Decode the token
         const token = atob(CONFIG.autoToken);
+        console.log('Auto-connecting to GitHub...');
+
+        // Set token directly
+        githubToken = token;
+        localStorage.setItem(CONFIG.tokenKey, token);
 
         // Test if token is valid
         const valid = await testGitHubToken(token);
+        console.log('Token valid:', valid);
 
         if (valid) {
-            githubToken = token;
-            localStorage.setItem(CONFIG.tokenKey, token);
             updateGitHubStatus();
             showToast('Automaticky připojeno ke GitHubu!', 'success');
+        } else {
+            console.error('Token test failed');
+            githubToken = null;
+            localStorage.removeItem(CONFIG.tokenKey);
         }
     } catch (error) {
         console.error('Auto-connect failed:', error);
     }
 
+    updateGitHubStatus();
     loadProjects();
 }
 

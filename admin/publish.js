@@ -59,12 +59,13 @@ function toBase64(content) {
 
 const MAX_GITHUB_FILE_BYTES = 50 * 1024 * 1024;
 
-export function createGitHubTarget({ owner, repo, branch = "main", token }) {
+export function createGitHubTarget({ owner, repo, branch = "", token }) {
   const repoUrl = `${GITHUB_API}/repos/${owner}/${repo}`;
 
   async function test() {
     const res = await ghFetch(repoUrl, { headers: ghHeaders(token) });
     const data = await res.json();
+    if (!branch) branch = data.default_branch;   // bez vyplnění = hlavní větev repozitáře
     if (!data.permissions || data.permissions.push !== true) {
       throw new Error("Token nemá oprávnění zapisovat do tohoto repozitáře (potřeba Contents: Read and write).");
     }

@@ -38,7 +38,7 @@ function initConnect() {
 
   $("#gh-form").addEventListener("submit", async e => {
     e.preventDefault();
-    const cfg = { owner: $("#gh-owner").value.trim(), repo: $("#gh-repo").value.trim(), branch: $("#gh-branch").value.trim() || "main", token: $("#gh-token").value.trim() };
+    const cfg = { owner: $("#gh-owner").value.trim(), repo: $("#gh-repo").value.trim(), branch: $("#gh-branch").value.trim(), token: $("#gh-token").value.trim() };
     const st = $("#gh-status"); st.className = "status"; st.textContent = "Ověřuji…";
     try {
       const t = createGitHubTarget(cfg);
@@ -46,7 +46,7 @@ function initConnect() {
       const remember = $("#gh-remember").checked;
       for (const k of ["owner", "repo", "branch"]) store.set("k3d-" + k, cfg[k], true);
       store.del("k3d-token"); store.set("k3d-token", cfg.token, remember);
-      await connected(t, `${cfg.owner}/${cfg.repo} · ${cfg.branch}`, r.detail);
+      await connected(t, r.detail.replace(/^Připojeno k /, "").replace(/\.$/, ""), r.detail);
     } catch (err) { st.className = "status bad"; st.textContent = err.message; }
   });
   $("#local-go").addEventListener("click", async () => {

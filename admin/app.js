@@ -203,7 +203,11 @@ async function modelEditor(w) {
   });
 
   if (w.id) {
+    // existující model: nahoře rovnou náhled a popisky, výměna souboru až na požádání
     f("drop-title").textContent = "Nahradit model — přetáhni nový .glb";
+    f("drop-wrap").hidden = true;
+    f("replace").hidden = false;
+    f("replace").addEventListener("click", () => { f("drop-wrap").hidden = false; f("drop-wrap").scrollIntoView({ behavior: "smooth", block: "center" }); f("file").click(); });
     await showModel(asset(w.model, w.rev), w.stats, w.stages, w.bytes);
   }
 

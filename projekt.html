@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>kraky3D — 3D model</title>
+<meta name="description" content="3D model z Blenderu rozložený na díly — kraky3D.">
+<meta name="theme-color" content="#0e0f11">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Crect width=%2716%27 height=%2716%27 rx=%273%27 fill=%27%230e0f11%27/%3E%3Crect x=%275%27 y=%275%27 width=%276%27 height=%276%27 fill=%27%23e8833a%27/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preload" href="data/projects.json" as="fetch" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/site.css">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.min.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+} }
+</script>
+<style>
+  .project { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); padding-top: var(--header); min-height: 100svh; }
+  .copy { padding: 40px var(--gutter) 32px; display: flex; flex-direction: column; gap: 20px; border-right: 1px solid var(--line); }
+  .back { font-family: var(--mono); font-size: 12px; color: var(--text-2); text-decoration: none; width: fit-content; }
+  .back:hover { color: var(--accent); }
+  .copy h1 { font-size: clamp(2.4rem, 4.4vw, 4.2rem); line-height: .98; letter-spacing: -.035em; font-weight: 500; margin: 0; text-wrap: balance; }
+  .copy p { color: var(--text-2); margin: 0; max-width: 42ch; white-space: pre-line; }
+  .legend { list-style: none; margin: auto 0 0; padding: 0; border-top: 1px solid var(--line); }
+  .legend li { border-bottom: 1px solid var(--line); }
+  .legend button { all: unset; box-sizing: border-box; width: 100%; display: grid; grid-template-columns: 30px 1fr auto; align-items: center; gap: 10px; padding: 10px 0; cursor: pointer; font-family: var(--mono); font-size: 12px; color: var(--text-2); transition: color .2s; }
+  .legend button:focus-visible { outline: 2px solid var(--accent); }
+  .legend .no { width: 22px; height: 22px; border: 1px solid var(--line-2); border-radius: 50%; display: grid; place-items: center; font-size: 10px; }
+  .legend .qty { color: var(--text-3); }
+  .legend button:hover, .legend button.hot { color: var(--accent); }
+  .legend button:hover .no, .legend button.hot .no { border-color: var(--accent); }
+
+  .drawing { position: relative; min-height: 460px; overflow: hidden; background-color: var(--bg);
+    background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 48px 48px; background-position: center; }
+  .drawing::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(75% 70% at 50% 50%, transparent 40%, var(--bg) 100%); }
+  .drawing .poster { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; z-index: 1; transition: opacity .5s var(--ease); }
+  .drawing.ready .poster { opacity: 0; }
+  .drawing canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: pan-y; z-index: 1; }
+  .drawing svg.callouts { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 2; }
+  .callouts line { stroke: var(--text-2); stroke-width: 1; }
+  .callouts circle.dot { fill: var(--text); }
+  .callouts .tag circle { fill: var(--bg); stroke: var(--text-2); }
+  .callouts .tag text { fill: var(--text); font: 500 11px var(--mono); text-anchor: middle; dominant-baseline: central; }
+  .callouts g.hot line, .callouts g.hot .tag circle { stroke: var(--accent); }
+  .callouts g.hot circle.dot { fill: var(--accent); }
+  .callouts g.hot .tag text { fill: var(--accent); }
+  .callouts .dim line { stroke: var(--text-3); }
+  .callouts .dim text { fill: var(--text-2); font: 400 10px var(--mono); text-anchor: middle; }
+  .callouts { transition: opacity .25s; }
+  .drawing.moving .callouts { opacity: 0; transition-duration: .05s; }
+  .toolbar { position: absolute; top: 18px; left: 18px; right: 18px; display: flex; gap: 8px; flex-wrap: wrap; z-index: 3; }
+  .toolbar .grow { flex: 1; }
+  .status { position: absolute; left: 18px; bottom: 16px; font-family: var(--mono); font-size: 11px; color: var(--text-3); z-index: 3; }
+  .titleblock { position: absolute; right: 0; bottom: 0; z-index: 3; display: grid; grid-template-columns: repeat(3, auto); border-top: 1px solid var(--line); border-left: 1px solid var(--line); background: rgba(14, 15, 17, .92); font-family: var(--mono); }
+  .titleblock div { padding: 8px 14px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); min-width: 108px; }
+  .titleblock div:nth-child(3n) { border-right: 0; }
+  .titleblock small { display: block; font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: var(--text-3); }
+  .titleblock span { font-size: 12px; color: var(--text); }
+  .titleblock .wide { grid-column: span 3; border-right: 0; }
+  .titleblock .wide span { font-family: var(--sans); font-size: 15px; font-weight: 500; }
+
+  section.band { border-top: 1px solid var(--line); padding: clamp(64px, 9vw, 120px) var(--gutter); }
+  .two { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: clamp(28px, 5vw, 72px); }
+  .two h2 { font-size: clamp(2rem, 3.8vw, 3.2rem); line-height: 1; letter-spacing: -.035em; font-weight: 500; margin: 12px 0 0; }
+  table.spec { width: 100%; border-collapse: collapse; font-size: 14px; }
+  table.spec th, table.spec td { text-align: left; padding: 12px 0; border-top: 1px solid var(--line); vertical-align: top; font-weight: 400; }
+  table.spec th { font-family: var(--mono); font-size: 11px; color: var(--text-3); width: 36%; letter-spacing: .04em; text-transform: uppercase; padding-top: 15px; }
+  table.spec td { color: var(--text-2); font-family: var(--mono); font-size: 13px; }
+  .next { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .next a { text-decoration: none; display: block; padding: 20px 0; border-top: 1px solid var(--line); }
+  .next a:last-child { text-align: right; }
+  .next small { display: block; font-family: var(--mono); font-size: 11px; color: var(--text-3); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 6px; }
+  .next span { font-size: clamp(1.4rem, 3vw, 2.4rem); letter-spacing: -.03em; font-weight: 500; line-height: 1.05; }
+  .next a:hover span { color: var(--accent); }
+  /* rendery modelu */
+  .gallery { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: clamp(10px, 1.4vw, 20px); }
+  .gallery button { all: unset; cursor: zoom-in; grid-column: span 4; display: block; border-radius: 4px; overflow: hidden; background: var(--bg-2); aspect-ratio: 4 / 3; }
+  .gallery button:first-child { grid-column: span 8; grid-row: span 2; aspect-ratio: auto; }
+  .gallery button:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+  .gallery img { width: 100%; height: 100%; object-fit: cover; transition: transform .9s var(--ease); }
+  .gallery button:hover img { transform: scale(1.025); }
+  .gallery[data-n="1"] button:first-child { grid-column: span 12; aspect-ratio: 16 / 9; grid-row: auto; }
+  .gallery[data-n="2"] button, .gallery[data-n="2"] button:first-child { grid-column: span 6; grid-row: auto; aspect-ratio: 3 / 2; }
+  dialog.proj { width: 100vw; height: 100svh; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; background: #000; color: var(--text); overflow: hidden; }
+  dialog.proj::backdrop { background: #000; }
+  dialog.proj[open] { animation: fadein .4s var(--ease); }
+  @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+  .proj-stage { position: absolute; inset: 0 0 80px; display: grid; place-items: center; padding: 64px 72px 0; }
+  .proj-stage img { max-width: calc(100vw - 144px); max-height: calc(100svh - 80px - 88px); width: auto; height: auto; object-fit: contain; }
+  .proj-cap { position: absolute; left: 0; right: 0; bottom: 0; height: 80px; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 0 24px; border-top: 1px solid var(--line); }
+  .proj-cap span { font-family: var(--mono); font-size: 12px; color: var(--text-3); }
+  .proj-nav { display: flex; gap: 8px; }
+  .proj-close { position: absolute; top: 16px; right: 16px; z-index: 2; }
+  .missing { padding: calc(var(--header) + 80px) var(--gutter) 120px; max-width: 720px; }
+  .missing h1 { font-size: clamp(2rem, 4vw, 3rem); letter-spacing: -.03em; font-weight: 500; }
+
+  @media (max-width: 960px) {
+    .project { grid-template-columns: minmax(0, 1fr); min-height: 0; }
+    .copy { border-right: 0; border-bottom: 1px solid var(--line); }
+    .drawing { min-height: 74svh; order: -1; }
+    .legend { display: grid; grid-template-columns: 1fr 1fr; column-gap: 16px; }
+    .two { grid-template-columns: minmax(0, 1fr); }
+  }
+  @media (max-width: 600px) {
+    .nav li:nth-child(2) { display: none; }
+    .toolbar .grow { display: none; }
+    .drawing canvas, .drawing svg.callouts, .drawing .poster { height: calc(100% - 108px); }
+    .titleblock { left: 0; grid-template-columns: repeat(3, 1fr); }
+    .titleblock div { min-width: 0; padding: 7px 10px; }
+    .titleblock .opt { display: none; }
+    .status { display: none; }
+    .next { grid-template-columns: 1fr; }
+    .gallery button, .gallery button:first-child { grid-column: span 12; grid-row: auto; aspect-ratio: 4 / 3; }
+    .proj-stage { padding: 56px 12px 0; }
+    .proj-stage img { max-width: calc(100vw - 24px); }
+    .next a:last-child { text-align: left; }
+  }
+</style>
+</head>
+<body>
+<header class="header solid">
+  <a class="logo" href="./" aria-label="kraky3D — domů"><i></i>kraky3D</a>
+  <nav aria-label="Hlavní"><ul class="nav">
+    <li><a href="./#prace">Práce</a></li>
+    <li><a href="./#proces">Proces</a></li>
+    <li><a href="./#o-mne">O mně</a></li>
+    <li><a href="./#kontakt">Kontakt</a></li>
+  </ul></nav>
+</header>
+
+<main id="main">
+  <section class="project" aria-labelledby="p-title">
+    <div class="copy">
+      <a class="back" href="./#prace">← Všechny práce</a>
+      <span class="eyebrow" id="p-meta">&nbsp;</span>
+      <h1 id="p-title">&nbsp;</h1>
+      <p id="p-desc"></p>
+      <ul class="legend" id="legend" aria-label="Díly modelu"></ul>
+    </div>
+    <div class="drawing" id="drawing">
+      <img class="poster" id="poster" alt="" aria-hidden="true">
+      <div class="toolbar">
+        <div class="seg" role="group" aria-label="Pohled">
+          <button type="button" data-view="iso" aria-pressed="true">Izometrie</button>
+          <button type="button" data-view="side" aria-pressed="false">Bok</button>
+          <button type="button" data-view="front" aria-pressed="false">Předek</button>
+          <button type="button" data-view="top" aria-pressed="false">Shora</button>
+        </div>
+        <span class="grow"></span>
+        <div class="seg" role="group" aria-label="Zobrazení" id="shades"></div>
+        <div class="seg" role="group" aria-label="Sestava"><button type="button" id="explode" aria-pressed="false">Rozložit</button></div>
+      </div>
+      <svg class="callouts" id="callouts" aria-hidden="true"></svg>
+      <div class="status" id="status" role="status">Připravuji výkres…</div>
+      <div class="titleblock" aria-label="Údaje o modelu">
+        <div class="wide"><small>Název</small><span id="tb-title">—</span></div>
+        <div><small>Vrcholy</small><span id="tb-verts">—</span></div>
+        <div><small>Trojúhelníky</small><span id="tb-tris">—</span></div>
+        <div><small>Díly</small><span id="tb-parts">—</span></div>
+        <div class="opt"><small>Autor</small><span>kraky3D</span></div>
+        <div class="opt"><small>Nástroj</small><span id="tb-gen">—</span></div>
+        <div class="opt"><small>Rok</small><span id="tb-year">—</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band" id="rendery" aria-labelledby="renders-h" hidden>
+    <div class="two" style="margin-bottom:clamp(28px,4vw,48px)"><div><p class="eyebrow">Rendery</p><h2 id="renders-h">Hotový obraz</h2></div><p class="muted" style="margin:0;align-self:end">Kliknutím se render promítne na celou obrazovku.</p></div>
+    <div class="gallery" id="gallery"></div>
+  </section>
+
+  <section class="band" aria-labelledby="about-h">
+    <div class="two">
+      <div><p class="eyebrow">Model</p><h2 id="about-h">Údaje</h2></div>
+      <table class="spec"><tbody id="spec"></tbody></table>
+    </div>
+  </section>
+
+  <section class="band" aria-label="Další práce"><nav class="next" id="next"></nav></section>
+</main>
+
+<dialog class="proj" id="proj" aria-label="Render na celou obrazovku">
+  <div class="proj-stage"><img id="proj-img" alt="" width="2400" height="1500"></div>
+  <div class="proj-cap"><span id="proj-count"></span><div class="proj-nav">
+    <button class="icon-btn" id="proj-prev" type="button" aria-label="Předchozí render">←</button>
+    <button class="icon-btn" id="proj-next" type="button" aria-label="Další render">→</button>
+  </div></div>
+  <button class="icon-btn proj-close" id="proj-close" type="button" aria-label="Zavřít">✕</button>
+</dialog>
+
+<footer class="site"><span>© <span id="year">2026</span> kraky3D</span><a href="mailto:kraky3d@email.cz">kraky3d@email.cz</a></footer>
+
+<script type="module">
+import { fmt, plural, canAutoload, hasWebGL } from "./assets/js/core-lite.js";
+
+const CATS = { postavy: "Postavy", produkty: "Produkty", prostredi: "Prostředí", jine: "Jiné" };
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const id = new URLSearchParams(location.search).get("p");
+document.getElementById("year").textContent = new Date().getFullYear();
+
+let works = [];
+try { works = (await (await fetch("data/projects.json", { cache: "no-cache" })).json()).works || []; } catch {}
+const models = works.filter(w => w.type === "model");
+const w = models.find(x => x.id === id);
+
+if (!w) {
+  document.getElementById("main").innerHTML = `<section class="missing"><p class="eyebrow">Nenalezeno</p><h1>Tenhle model tu není.</h1><p class="muted">Možná byl přejmenován nebo smazán.</p><p><a class="btn" href="./#prace">Zpět na výběr prací</a></p></section>`;
+} else {
+  document.title = `${w.title} — kraky3D`;
+  document.getElementById("p-meta").textContent = `${CATS[w.category] || ""} · ${w.year}`;
+  document.getElementById("p-title").textContent = w.title;
+  document.getElementById("p-desc").textContent = w.description || "";
+  document.getElementById("tb-title").textContent = w.title;
+  document.getElementById("tb-verts").textContent = fmt(w.stats.verts);
+  document.getElementById("tb-tris").textContent = fmt(w.stats.tris);
+  document.getElementById("tb-parts").textContent = w.stats.parts;
+  document.getElementById("tb-gen").textContent = w.stats.generator || "Blender";
+  document.getElementById("tb-year").textContent = w.year;
+  document.getElementById("poster").src = `${w.lines}?v=${w.rev}`;
+
+  const rows = [
+    ["Vrcholy", fmt(w.stats.verts)], ["Trojúhelníky", fmt(w.stats.tris)],
+    ["Díly", `${w.stats.parts} ${plural(w.stats.parts, "objekt", "objekty", "objektů")}`],
+    ["Materiály", w.stats.materials || "zatím žádné"],
+    ["Textury", w.stats.textures ? `${w.stats.textures} · ${w.stats.textureSize} px` : "zatím žádné"],
+    ["Soubor", `GLB · ${Math.max(1, Math.round(w.bytes / 1024))} kB`],
+    ["Nástroj", w.stats.generator || "Blender"],
+  ];
+  document.getElementById("spec").innerHTML = rows.map(([k, v]) => `<tr><th scope="row">${k}</th><td>${esc(v)}</td></tr>`).join("");
+
+  const shown = (w.parts || []).filter(p => p.show);
+  document.getElementById("legend").innerHTML = shown.map((p, i) => `<li><button type="button" data-g="${esc(p.key)}"><span class="no">${i + 1}</span>${esc(p.label || p.key)}<span class="qty">${p.count ? p.count + "×" : ""}</span></button></li>`).join("");
+  document.getElementById("legend").hidden = !shown.length;
+
+  // rendery modelu: galerie + promítání
+  const imgs = w.images || [];
+  if (imgs.length) {
+    document.getElementById("rendery").hidden = false;
+    const at = p => `${p}?v=${w.rev}`;
+    const gal = document.getElementById("gallery");
+    gal.dataset.n = Math.min(imgs.length, 3);   // 1 = celá šířka, 2 = půl na půl, 3+ = velký + menší
+    gal.innerHTML = imgs.map((im, i) => `
+      <button type="button" data-i="${i}" aria-label="Render ${i + 1} — promítnout">
+        <img src="${esc(at(i === 0 ? im.src : im.sm))}" width="${im.w}" height="${im.h}" loading="lazy" decoding="async" alt="${esc(w.title)} — render ${i + 1}">
+      </button>`).join("");
+    const proj = document.getElementById("proj"); let cur = 0;
+    const show = i => {
+      cur = (i + imgs.length) % imgs.length;
+      const im = document.getElementById("proj-img"); im.src = at(imgs[cur].src); im.alt = `${w.title} — render ${cur + 1}`;
+      document.getElementById("proj-count").textContent = `${w.title} · ${cur + 1} / ${imgs.length}`;
+      if (!proj.open) proj.showModal();
+    };
+    document.getElementById("gallery").addEventListener("click", e => { const b = e.target.closest("button"); if (b) show(+b.dataset.i); });
+    document.getElementById("proj-prev").onclick = () => show(cur - 1);
+    document.getElementById("proj-next").onclick = () => show(cur + 1);
+    document.getElementById("proj-close").onclick = () => proj.close();
+    proj.addEventListener("keydown", e => { if (e.key === "ArrowLeft") show(cur - 1); if (e.key === "ArrowRight") show(cur + 1); });
+    document.getElementById("proj-prev").hidden = document.getElementById("proj-next").hidden = imgs.length < 2;
+  }
+
+  const shades = [["line", "Výkres"], ["clay", "Hlína"], ...(w.stages.includes("final") ? [["final", "Render"]] : [])];
+  document.getElementById("shades").innerHTML = shades.map(([k, v], i) => `<button type="button" data-shade="${k}" aria-pressed="${i === 0}">${v}</button>`).join("");
+
+  const i = models.indexOf(w), prev = models[(i - 1 + models.length) % models.length], next = models[(i + 1) % models.length];
+  document.getElementById("next").innerHTML = models.length > 1
+    ? `<a href="projekt.html?p=${encodeURIComponent(prev.id)}"><small>← Předchozí</small><span>${esc(prev.title)}</span></a><a href="projekt.html?p=${encodeURIComponent(next.id)}"><small>Další →</small><span>${esc(next.title)}</span></a>`
+    : `<a href="./#prace"><small>Další práce</small><span>Zpět na výběr →</span></a>`;
+
+  const start = () => hasWebGL()
+    ? import("./assets/js/drawing.js").then(m => m.boot(w)).catch(err => { console.warn(err); document.getElementById("status").textContent = "3D se nepodařilo načíst — zobrazen náhled."; })
+    : (document.getElementById("status").textContent = "Prohlížeč nepodporuje WebGL — zobrazen náhled.");
+  if (canAutoload()) start();
+  else {
+    const st = document.getElementById("status"); st.textContent = "";
+    const b = Object.assign(document.createElement("button"), { className: "btn btn-sm", type: "button", textContent: `Načíst 3D model (${Math.max(1, Math.round(w.bytes / 1024))} kB)` });
+    b.onclick = () => { b.remove(); start(); }; st.append(b);
+  }
+}
+</script>
+</body>
+</html>

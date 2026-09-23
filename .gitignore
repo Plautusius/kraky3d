@@ -1,0 +1,5 @@
+_zdroj/
+_navrhy/
+.claude/
+__pycache__/
+*.pyc

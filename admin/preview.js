@@ -33,7 +33,7 @@ export class Preview {
     this.scene.add(this.root);
     buildStageMaterials(info.meshes);
     this.drawing = buildDrawing(info.meshes, { ink: 0xc9c7c2, fill: 0x0e0f11 });
-    computeExplode(info.meshes, size);
+    computeExplode(info.units, size);
     this.camera.near = radius / 100; this.camera.far = radius * 100;
     const d = radius / Math.sin(THREE.MathUtils.degToRad(15)) * 1.05;
     this.camera.position.set(-d * 0.62, d * 0.38, -d * 0.68);
@@ -72,7 +72,7 @@ export class Preview {
     let moving = this.controls.update();
     const d = this.exWant - this.ex;
     if (Math.abs(d) > 1e-3) { this.ex += d * 0.12; moving = true; } else this.ex = this.exWant;
-    if (this.info) setExplode(this.info.meshes, this.ex);
+    if (this.info) setExplode(this.info.units, this.ex);
     this.renderer.render(this.scene, this.camera);
     if (moving) requestAnimationFrame(() => this.tick()); else this.running = false;
   }

@@ -11,44 +11,20 @@
       "featured": false,
       "parts": [
         {
-          "key": "Cube",
-          "label": "",
-          "show": false,
-          "count": 1
-        },
-        {
-          "key": "Cube041 1",
-          "label": "Cube041 1",
-          "show": true,
-          "count": 1
-        },
-        {
-          "key": "Cube041 2",
-          "label": "Cube041 2",
-          "show": true,
-          "count": 1
-        },
-        {
-          "key": "Cube041 3",
-          "label": "Cube041 3",
-          "show": true,
-          "count": 1
-        },
-        {
-          "key": "Cube041 4",
-          "label": "Cube041 4",
-          "show": true,
-          "count": 1
-        },
-        {
-          "key": "Zad naprava",
-          "label": "Zad naprava",
+          "key": "Dodge karoserie",
+          "label": "Karoserie",
           "show": true,
           "count": 1
         },
         {
           "key": "Pred naprava",
-          "label": "Pred naprava",
+          "label": "Přední náprava",
+          "show": true,
+          "count": 1
+        },
+        {
+          "key": "Zad naprava",
+          "label": "Zadní náprava",
           "show": true,
           "count": 1
         }
@@ -64,8 +40,8 @@
       "stats": {
         "verts": 6349,
         "tris": 7896,
-        "parts": 7,
-        "shapes": 7,
+        "parts": 3,
+        "shapes": 3,
         "materials": 5,
         "textures": 0,
         "textureSize": 0,

@@ -4,6 +4,7 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 
 const INK = 0xc9c7c2, MARK = 0xe8833a, FILL = 0x0e0f11;
+const HINT = matchMedia("(pointer: fine)").matches ? "Táhnutím otočíte · Ctrl + kolečko přiblíží" : "Dvěma prsty přiblížíte a otočíte";
 const VIEWS = {
   iso:   { az: Math.PI * 1.25, el: 0.52 },
   side:  { az: Math.PI * 1.0, el: 0.0001 },
@@ -23,6 +24,15 @@ export async function boot(work) {
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.domElement.setAttribute("aria-hidden", "true");
   drawing.querySelector(".poster").after(renderer.domElement);
+
+  // Kolečko samo posouvá stránku; přiblížení jen s Ctrl (⌘). Musí být zaregistrované PŘED OrbitControls.
+  let hintTimer = 0;
+  renderer.domElement.addEventListener("wheel", e => {
+    if (e.ctrlKey || e.metaKey) return;
+    e.stopImmediatePropagation();
+    statusEl.textContent = "Přiblížení: Ctrl + kolečko, nebo tlačítka + / −";
+    clearTimeout(hintTimer); hintTimer = setTimeout(() => { statusEl.textContent = HINT; }, 2200);
+  }, { passive: true });
   const scene = new THREE.Scene();
   const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -100, 100);
 
@@ -36,7 +46,7 @@ export async function boot(work) {
 
   buildStageMaterials(info.meshes);
   const { fillMat, lineMats } = buildDrawing(info.meshes, { ink: INK, fill: FILL });
-  computeExplode(info.meshes, size);
+  computeExplode(info.units, size);
   for (const o of info.meshes) o.material = fillMat;
 
   // světlo jen pro hlínu a render
@@ -52,9 +62,16 @@ export async function boot(work) {
   const named = [...info.groups.values()].filter(g => labels.has(g.key)).map(g => ({ ...g, ...labels.get(g.key) }));
 
   const controls = new OrbitControls(camera, renderer.domElement);
-  controls.enableZoom = false; controls.enablePan = false;
+  controls.enableZoom = true; controls.enablePan = false;
+  controls.minZoom = 0.6; controls.maxZoom = 8;
   controls.enableDamping = true; controls.dampingFactor = 0.1;
-  controls.enabled = matchMedia("(pointer: fine)").matches;
+  // dotyk: jeden prst posouvá stránku, dva prsty přibližují a otáčejí
+  if (!matchMedia("(pointer: fine)").matches) controls.touches = { ONE: -1, TWO: THREE.TOUCH.DOLLY_ROTATE };
+
+  const zoomTo = z => { camera.zoom = Math.min(controls.maxZoom, Math.max(controls.minZoom, z)); camera.updateProjectionMatrix(); kick(); };
+  document.getElementById("zoom-in").addEventListener("click", () => zoomTo(camera.zoom * 1.35));
+  document.getElementById("zoom-out").addEventListener("click", () => zoomTo(camera.zoom / 1.35));
+  document.getElementById("zoom-reset").addEventListener("click", () => zoomTo(1));
 
   const cur = { az: VIEWS.iso.az, el: VIEWS.iso.el, ex: 0 };
   const want = { ...cur };
@@ -84,7 +101,7 @@ export async function boot(work) {
     const el = renderer.domElement, W = el.clientWidth, H = el.clientHeight, cx = W / 2, cy = H / 2;
     let out = "";
     for (const g of named) {
-      const [x, y] = project(new THREE.Box3().setFromObject(g.meshes[0]).getCenter(new THREE.Vector3()));
+      const [x, y] = project(new THREE.Box3().setFromObject(g.units[0]).getCenter(new THREE.Vector3()));
       let dx = x - cx, dy = y - cy; const L = Math.hypot(dx, dy) || 1; dx /= L; dy /= L;
       const reach = Math.min(W, H) * 0.16;
       const tx = Math.max(22, Math.min(W - 22, x + dx * reach)), ty = Math.max(70, Math.min(H - 70, y + dy * reach));
@@ -150,7 +167,7 @@ export async function boot(work) {
     drawing.classList.remove("moving");
     kick();
   });
-  controls.addEventListener("change", () => { if (dragging) kick(); });
+  controls.addEventListener("change", kick);   // i přiblížení kolečkem / prsty
 
   let running = false, visible = true;
   new IntersectionObserver(([e]) => { visible = e.isIntersecting; kick(); }).observe(drawing);
@@ -163,7 +180,7 @@ export async function boot(work) {
         const d = want[key] - cur[key];
         if (Math.abs(d) > 1e-4) { cur[key] += d * k; moving = true; } else cur[key] = want[key];
       }
-      setExplode(info.meshes, cur.ex);
+      setExplode(info.units, cur.ex);
       place();
       if (moving) resize();
     } else controls.update();
@@ -177,5 +194,5 @@ export async function boot(work) {
   new ResizeObserver(resize).observe(drawing);
   place(); resize();
   drawing.classList.add("ready");
-  statusEl.textContent = named.length ? "Táhnutím otočíte · najeďte na díl v legendě" : "Táhnutím otočíte";
+  statusEl.textContent = HINT;
 }

@@ -27,6 +27,10 @@ export function analyze(gltf) {
   const has = { normalMap: false, map: false, materials: false };
   const jsonMats = gltf.parser?.json?.materials || [];
   has.materials = jsonMats.length > 0;
+  // Objekt z Blenderu s více materiály přijde jako skupina kousků — dílem je celá skupina.
+  const assoc = gltf.parser?.associations;
+  const unitOf = o => (o.parent && o.parent !== root && o.parent.isGroup && assoc?.get(o.parent)?.meshes !== undefined) ? o.parent : o;
+  const units = [];
   const groups = new Map();
   for (const o of meshes) {
     const g = o.geometry;
@@ -37,18 +41,22 @@ export function analyze(gltf) {
       if (m.normalMap) has.normalMap = true;
       if (m.map) has.map = true;
     }
-    const key = partKey(o.name);
-    if (!groups.has(key)) groups.set(key, { key, meshes: [] });
-    groups.get(key).meshes.push(o);
+    const unit = unitOf(o);
+    if (!units.includes(unit)) units.push(unit);
+    const key = partKey(unit.name);
+    if (!groups.has(key)) groups.set(key, { key, meshes: [], units: [] });
+    const grp = groups.get(key);
+    grp.meshes.push(o);
+    if (!grp.units.includes(unit)) grp.units.push(unit);
   }
   const stages = STAGE_ORDER.filter(s => !STAGES[s].needs || has[STAGES[s].needs]);
   const maxTex = [...textures].reduce((a, t) => Math.max(a, t.image?.width || 0), 0);
   const genRaw = gltf.parser?.json?.asset?.generator || "";
   const genV = genRaw.match(/\bv(\d+\.\d+)/);   // "glTF 2.0" je verze formátu, ne Blenderu
   return {
-    meshes, groups, stages, has,
+    meshes, units, groups, stages, has,
     stats: {
-      verts: Math.round(verts), tris: Math.round(tris), parts: meshes.length, shapes: groups.size,
+      verts: Math.round(verts), tris: Math.round(tris), parts: units.length, shapes: groups.size,
       materials: jsonMats.length, textures: textures.size, textureSize: maxTex,
       generator: /blender/i.test(genRaw) ? ("Blender " + (genV ? genV[1] : "")).trim() : (/gltf-transform/i.test(genRaw) ? "" : genRaw),
     },
@@ -99,9 +107,10 @@ export function buildDrawing(meshes, { ink = 0xc9c7c2, fill = 0x0e0f11, angle = 
 }
 
 // Směry rozložení: od středu sestavy, úměrně velikosti. Vrací posun v lokálních souřadnicích rodiče.
-export function computeExplode(meshes, size) {
+// Posouvají se celé díly (info.units), ne jednotlivé materiály — jinak se karoserie rozpadne.
+export function computeExplode(units, size) {
   const reach = size.length() * 0.22;
-  for (const o of meshes) {
+  for (const o of units) {
     const c = new THREE.Box3().setFromObject(o).getCenter(new THREE.Vector3());
     const dir = c.clone(); dir.y *= 1.6;
     if (dir.lengthSq() < 1e-8) dir.set(0, 1, 0);
@@ -112,8 +121,8 @@ export function computeExplode(meshes, size) {
     o.userData.away = p0.add(dir).applyMatrix4(inv).sub(o.position);
   }
 }
-export function setExplode(meshes, t) {
+export function setExplode(units, t) {
   const e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
-  for (const o of meshes) if (o.userData.home) o.position.copy(o.userData.home).addScaledVector(o.userData.away, e);
+  for (const o of units) if (o.userData.home) o.position.copy(o.userData.home).addScaledVector(o.userData.away, e);
 }
 

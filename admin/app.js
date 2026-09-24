@@ -4,7 +4,7 @@ import { createGitHubTarget, createLocalTarget } from "./publish.js";
 const DATA = "data/projects.json";
 const CATS = { postavy: "Postavy", produkty: "Produkty", prostredi: "Prostředí", jine: "Jiné" };
 // výchozí jména z Blenderu a automaticky rozdělené díly — v legendě až po pojmenování
-const GENERIC = /^(plane|circle|cube|cylinder|sphere|uv sphere|icosphere|cone|torus|mesh|object|bezier|curve|text|díl \d+|drobné díly)\b/i;
+const GENERIC = /^(plane|circle|cube|cylinder|sphere|uv sphere|icosphere|cone|torus|mesh|object|bezier|curve|text|díl \d+|drobné díly)(?![a-zá-ž])/i;   // i „Cube041“, ne jen „Cube“
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const isLocalHost = ["localhost", "127.0.0.1"].includes(location.hostname);
@@ -272,7 +272,7 @@ async function modelEditor(w) {
 
   function renderFacts(s, bytes) {
     f("facts").innerHTML = [
-      ["Vrcholy", fmtN(s.verts)], ["Trojúhelníky", fmtN(s.tris)], ["Díly", `${s.parts} (${s.shapes} tvarů)`],
+      ["Vrcholy", fmtN(s.verts)], ["Trojúhelníky", fmtN(s.tris)], ["Díly", s.parts === s.shapes ? String(s.parts) : `${s.parts} (${s.shapes} ${s.shapes >= 2 && s.shapes <= 4 ? "tvary" : "tvarů"})`],
       ["Materiály", s.materials || "žádné"], ["Textury", s.textures ? `${s.textures} · ${s.textureSize} px` : "žádné"], ["Velikost", kb(bytes)],
     ].map(([k, v]) => `<div><small>${k}</small><b>${esc(v)}</b></div>`).join("");
   }

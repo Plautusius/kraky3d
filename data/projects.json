@@ -2,6 +2,80 @@
   "version": 1,
   "works": [
     {
+      "id": "dodge-airflow-11-low",
+      "type": "model",
+      "title": "Dodge Airflow 11  Low",
+      "category": "produkty",
+      "year": 2026,
+      "description": "",
+      "featured": false,
+      "parts": [
+        {
+          "key": "Cube",
+          "label": "",
+          "show": false,
+          "count": 1
+        },
+        {
+          "key": "Cube041 1",
+          "label": "Cube041 1",
+          "show": true,
+          "count": 1
+        },
+        {
+          "key": "Cube041 2",
+          "label": "Cube041 2",
+          "show": true,
+          "count": 1
+        },
+        {
+          "key": "Cube041 3",
+          "label": "Cube041 3",
+          "show": true,
+          "count": 1
+        },
+        {
+          "key": "Cube041 4",
+          "label": "Cube041 4",
+          "show": true,
+          "count": 1
+        },
+        {
+          "key": "Zad naprava",
+          "label": "Zad naprava",
+          "show": true,
+          "count": 1
+        },
+        {
+          "key": "Pred naprava",
+          "label": "Pred naprava",
+          "show": true,
+          "count": 1
+        }
+      ],
+      "model": "models/dodge-airflow-11-low.glb",
+      "cover": "thumbs/dodge-airflow-11-low.webp",
+      "lines": "thumbs/dodge-airflow-11-low-lines.webp",
+      "stages": [
+        "wire",
+        "clay",
+        "final"
+      ],
+      "stats": {
+        "verts": 6349,
+        "tris": 7896,
+        "parts": 7,
+        "shapes": 7,
+        "materials": 5,
+        "textures": 0,
+        "textureSize": 0,
+        "generator": "Blender 5.1"
+      },
+      "bytes": 80404,
+      "rev": "mufhrcw9",
+      "images": []
+    },
+    {
       "id": "volkswagen-brouk",
       "type": "model",
       "title": "Volkswagen Brouk",
@@ -69,5 +143,5 @@
       "images": []
     }
   ],
-  "updated": "2026-09-23T18:19:52.069Z"
+  "updated": "2026-09-24T12:11:42.729Z"
 }
